@@ -11,7 +11,7 @@
 
 1. Клонуйте репозиторій:
 ```bash
-git clone https://github.com/your-username/lagrange.git
+git clone https://github.com/tkachandrei94/Langrange.git
 cd lagrange
 ```
 
