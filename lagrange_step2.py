@@ -2,14 +2,11 @@ from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QLineEdit
 from sympy import symbols, sympify, diff
 from PyQt6.QtCore import Qt
 import sympy as sp
+from test_config import test_config_step2
 
 class LagrangeStep2(QWidget):
     def __init__(self, parent, switch_step_callback):
         super().__init__(parent)
-
-        # TODO 
-        self.test = ["y - 2*λ1", "x - λ1", "-2*x - y + 5"]
-
         self.switch_step = switch_step_callback
         self.function_str = ""
         self.constraint_strs = []
@@ -104,7 +101,7 @@ class LagrangeStep2(QWidget):
         for var in var_symbols:
             label = QLabel(f"dL/d{var} = ")
             entry = QLineEdit()
-            entry.setText(self.test[row])
+            entry.setText(test_config_step2[row])
 
             self.derivatives_grid_layout.addWidget(label, row, 0)
             self.derivatives_grid_layout.addWidget(entry, row, 1)
@@ -114,7 +111,7 @@ class LagrangeStep2(QWidget):
         for lam in lambda_syms:
             label = QLabel(f"dL/d{lam} = ") # Використовуємо безпосередньо символ λ
             entry = QLineEdit()
-            entry.setText(self.test[row])
+            entry.setText(test_config_step2[row])
             self.derivatives_grid_layout.addWidget(label, row, 0)
             self.derivatives_grid_layout.addWidget(entry, row, 1)
             self.derivative_entries[str(lam)] = entry
@@ -155,10 +152,12 @@ class LagrangeStep2(QWidget):
             incorrect_derivatives = []
 
             for symbol_str, entry in self.derivative_entries.items():
-                entered_derivative_str = entry.text().strip().lower()
+                entered_derivative_str = entry.text().replace(" ", "").lower()
                 expected_symbol = symbols(symbol_str)
                 expected_derivative = expected_derivatives.get(expected_symbol, "")
-                expected_derivative_str = str(expected_derivative).lower()
+                expected_derivative_str = str(expected_derivative).replace(" ", "").lower()
+                print("entered_derivative_str:", entered_derivative_str, " | expected_derivative_str:", expected_derivative_str, " | check_result: :", entered_derivative_str == expected_derivative_str)
+
                 if entered_derivative_str != expected_derivative_str:
                     all_correct = False
                     incorrect_derivatives.append(symbol_str)

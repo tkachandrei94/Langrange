@@ -1,20 +1,21 @@
-from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QHBoxLayout, QLineEdit, QButtonGroup, \
+from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QComboBox, QHBoxLayout, QLineEdit, QButtonGroup, \
     QRadioButton, QSpacerItem, QSizePolicy # Додано QSpacerItem, QSizePolicy
 from PyQt6.QtCore import Qt
 import sympy as sp
+import json
 
 
 class LagrangeStep6(QWidget):
     def __init__(self, parent=None, switch_step_callback=None):
         super().__init__(parent)
+        
+        self.main_window = parent
         self.switch_step = switch_step_callback
         self.determinant_value = None
-        self.solutions = {}
+        # self.solutions = {}
         self.function_str = ""
         self.variables = []
-
-        # TODO remove
-        self.test = ["5/4", "5/2", "25/8"]
+        self.all_solutions_data = [] # Для зберігання всіх рішень
 
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -22,15 +23,27 @@ class LagrangeStep6(QWidget):
         instruction_label = QLabel("<b>Етап 6: Аналіз розв'язку та висновок</b><br>"
                                    "На цьому етапі ви можете переглянути отримані рішення та зробити висновки.")
         main_layout.addWidget(instruction_label)
-        main_layout.addSpacing(10)
+        main_layout.addSpacing(5)
 
-        self.solution_point_label = QLabel("Знайдені рішення у вигляді точки:")
+        # Елементи для вибору рішення, якщо їх декілька
+        self.solution_choice_label = QLabel("Оберіть рішення для аналізу:")
+        self.solution_choice_label.setStyleSheet("font-weight: bold; font-size: 14pt;")
+        self.solution_selector_combo = QComboBox()
+        self.solution_selector_combo.currentIndexChanged.connect(self._on_solution_selected)
+        
+        main_layout.addWidget(self.solution_choice_label)
+        main_layout.addWidget(self.solution_selector_combo)
+        self.solution_choice_label.hide() # Сховати за замовчуванням
+        self.solution_selector_combo.hide() # Сховати за замовчуванням
+        main_layout.addSpacing(5)
+
+        self.solution_point_label = QLabel()
         main_layout.addWidget(self.solution_point_label)
         main_layout.addSpacing(5)
 
         self.determinant_display_label = QLabel("Значення визначника матриці Гессе (Δ):")
         main_layout.addWidget(self.determinant_display_label)
-        main_layout.addSpacing(15)
+        main_layout.addSpacing(5)
 
         # --- Блок для візуалізації функції та підстановки ---
         # 1. Z з вибором min/max/saddle та відображенням функції
@@ -88,10 +101,8 @@ class LagrangeStep6(QWidget):
         f_and_variables_layout = QHBoxLayout()
         f_and_variables_layout.setContentsMargins(0, 0, 0, 0) # Прибираємо внутрішні відступи
         f_and_variables_layout.setSpacing(0) # Прибираємо стандартні проміжки
-
         f_and_variables_layout.addWidget(QLabel("F("))
 
-        # self.substitution_variables_inputs_layout тепер буде вкладатися в f_and_variables_layout
         self.substitution_variables_inputs_layout = QHBoxLayout()
         self.substitution_variables_inputs_layout.setContentsMargins(0, 0, 0, 0)
         self.substitution_variables_inputs_layout.setSpacing(5) # Невеликий простір між полями
@@ -107,7 +118,8 @@ class LagrangeStep6(QWidget):
 
         self.final_function_value_entry = QLineEdit()
         self.final_function_value_entry.setPlaceholderText("Обчислити значення")
-        self.final_function_value_entry.setFixedWidth(40)
+        self.final_function_value_entry.setMinimumWidth(100)
+        
         substitution_full_layout.addWidget(self.final_function_value_entry)
 
         # Додаємо "розтягувач" (spacer) в кінці, щоб все притиснулося до лівого краю
@@ -160,12 +172,31 @@ class LagrangeStep6(QWidget):
         print(f"  solutions: {solutions}")
         print(f"  function_str: {function_str}")
         print(f"  variables: {variables}")
+        
+        # self.all_solutions_data = self.main_window.all_solutions_step3
+        # print(f"  all_solutions_step3 from main_window: {self.all_solutions_data}")
+
+        raw_solutions_data = self.main_window.all_solutions_step3
+        self.all_solutions_data = []
+        if raw_solutions_data:
+            for sol_dict in raw_solutions_data:
+                processed_sol = {}
+                for var_name, data_dict in sol_dict.items():
+                    processed_data = data_dict.copy() # Копіюємо, щоб не змінювати оригінал у main_window
+                    if 'float_val' in processed_data and isinstance(processed_data['float_val'], (float, int)):
+                        processed_data['float_val'] = round(processed_data['float_val'], 3)
+                    processed_sol[var_name] = processed_data
+                self.all_solutions_data.append(processed_sol)
+        print(f"  all_solutions_step3 from main_window (після округлення): {json.dumps(self.all_solutions_data, indent=2, ensure_ascii=False)}")
 
         self.determinant_value = determinant_value
-        self.solutions = solutions
+        # self.solutions = solutions
         self.function_str = function_str
         self.variables = variables
         self.display_results()
+
+        self._setup_solution_selector() # Налаштовуємо комбо-бокс
+        self._update_display_for_current_selection() # Оновлюємо UI на основі поточного вибору (або першого рішення)
 
         self.update_z_function_display()
 
@@ -182,46 +213,148 @@ class LagrangeStep6(QWidget):
         self.function_value_feedback_label.clear()
 
 
-    def display_results(self):
-        solution_point_text = "<b>Знайдені рішення у вигляді точки:</b> A("
-        sorted_variables = sorted([var for var in self.variables if var in self.solutions])
-        point_coords = []
-        for var in sorted_variables:
-            point_coords.append(f"{var}={str(self.solutions[var])}")
-        solution_point_text += ", ".join(point_coords) + ")"
-        self.solution_point_label.setText(solution_point_text)
+    def _setup_solution_selector(self):
+        self.solution_selector_combo.blockSignals(True) # Блокуємо сигнали під час заповнення
+        self.solution_selector_combo.clear()
 
+        if self.all_solutions_data and len(self.all_solutions_data) > 1:
+            self.solution_choice_label.show()
+            self.solution_selector_combo.show()
+            for i, sol_data in enumerate(self.all_solutions_data):
+                # Формуємо рядок для відображення в комбо-боксі
+                # Використовуємо self.variables для правильного порядку та набору змінних
+                parts = []
+                for var_name in sorted(self.variables): # Використовуємо self.variables для порядку
+                    if var_name in sol_data:
+                        parts.append(f"{var_name}={sol_data[var_name]['fraction_str']}")
+                    elif str(var_name) in sol_data: # На випадок, якщо var_name це символ
+                         parts.append(f"{str(var_name)}={sol_data[str(var_name)]['fraction_str']}")
+
+                # Додаємо множники Лагранжа, якщо вони є в рішенні та не в self.variables
+                for var_name in sorted(sol_data.keys()):
+                    if var_name not in self.variables and var_name not in [p.split('=')[0] for p in parts]:
+                         parts.append(f"{var_name}={sol_data[var_name]['fraction_str']}")
+                
+                solution_text = f"Рішення {i + 1}: ({', '.join(parts)})"
+                self.solution_selector_combo.addItem(solution_text)
+        else:
+            self.solution_choice_label.hide()
+            self.solution_selector_combo.hide()
+        
+        self.solution_selector_combo.blockSignals(False) # Розблоковуємо сигнали
+
+    def _on_solution_selected(self):
+        self._update_display_for_current_selection()
+
+    def _update_display_for_current_selection(self):
+        current_solution_to_display = None
+        
+        if self.solution_selector_combo.isVisible() and self.solution_selector_combo.currentIndex() != -1:
+            if self.all_solutions_data and self.solution_selector_combo.currentIndex() < len(self.all_solutions_data):
+                current_solution_to_display = self.all_solutions_data[self.solution_selector_combo.currentIndex()]
+        elif self.all_solutions_data: # Одне рішення, комбо-бокс невидимий
+            current_solution_to_display = self.all_solutions_data[0]
+
+        # Очищення полів вводу для підстановки перед заповненням
+        while self.substitution_variables_inputs_layout.count():
+            item = self.substitution_variables_inputs_layout.takeAt(0)
+            widget_to_delete = item.widget()
+            if widget_to_delete:
+                widget_to_delete.deleteLater()
+            layout_to_delete = item.layout()
+            if layout_to_delete:
+                while layout_to_delete.count():
+                    sub_item = layout_to_delete.takeAt(0)
+                    if sub_item.widget():
+                        sub_item.widget().deleteLater()
+                layout_to_delete.deleteLater()
+
+        self.variable_value_entries.clear()
+
+        if current_solution_to_display:
+            point_coords = []
+            # Використовуємо self.variables для гарантованого порядку та набору змінних для підстановки
+            # Множники Лагранжа тут не потрібні для підстановки в цільову функцію
+            for var_name in sorted(self.variables): # self.variables - це ['x', 'y'], наприклад
+                print(f"  var_name: {var_name}")
+                if var_name in current_solution_to_display:
+                    val_data = current_solution_to_display[var_name]
+                    point_coords.append(f"{var_name}={val_data['fraction_str']}")
+                    
+                    var_entry = QLineEdit()
+                    var_entry.setMinimumWidth(100)
+                    var_entry.setPlaceholderText(f"{var_name}")
+                    var_entry.setText(str(val_data['float_val'])) 
+
+                    self.variable_value_entries[var_name] = var_entry
+                    self.substitution_variables_inputs_layout.addWidget(QLabel(", "))
+                    self.substitution_variables_inputs_layout.addWidget(var_entry)
+
+            self.solution_point_label.setText(f"<b>Обране рішення:</b> A( {', '.join(point_coords)} )")
+            self.final_function_value_entry.clear() # Очищаємо поле результату функції
+        else:
+            self.solution_point_label.setText("Рішення не обрано або не знайдено.")
+            # Очистити поля вводу, якщо немає рішення
+            self.final_function_value_entry.clear()
+
+
+        # Визначник відображається незалежно від обраного рішення (поточна логіка)
         self.determinant_display_label.setText(
             f"<b>Значення визначника матриці Гессе (Δ):</b> {self.determinant_value}")
 
-        # --- Очищення та заповнення полів вводу для підстановки ---
-        while self.substitution_variables_inputs_layout.count():
-            item = self.substitution_variables_inputs_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-            elif item.layout():
-                while item.layout().count():
-                    sub_item = item.layout().takeAt(0)
-                    if sub_item.widget():
-                        sub_item.widget().deleteLater()
-                item.layout().deleteLater()
-        self.variable_value_entries.clear()
 
-        first_variable = True
-        for var in sorted_variables:
-            if not first_variable:
-                comma_label = QLabel(", ")
-                self.substitution_variables_inputs_layout.addWidget(comma_label)
+    def display_results(self):
+        self._update_display_for_current_selection() # Гарантує оновлення
 
-            var_entry = QLineEdit()
-            var_entry.setPlaceholderText(f"{var}")
-            var_entry.setFixedWidth(60)
-            self.variable_value_entries[var] = var_entry
-            self.substitution_variables_inputs_layout.addWidget(var_entry)
+        # if len(all_solutions) > 1:
+        #     # вівести в строку ответы
+        #     self.solution_point_label.setText(f"Знайдені рішення у вигляді точки: {all_solutions}")
+        # else:
+        #     solution_point_text = "<b>Знайдені рішення у вигляді точки:</b> A("
+        #     sorted_variables = sorted([var for var in self.variables if var in self.solutions])
+        #     point_coords = []
+        #     for var in sorted_variables:
+        #         point_coords.append(f"{var}={str(self.solutions[var])}")
+        #     solution_point_text += ", ".join(point_coords) + ")"
+        #     self.solution_point_label.setText(solution_point_text)
+            
+        # sorted_variables = sorted([var for var in self.variables if var in self.solutions])
+        # point_coords = []
+        # for var in sorted_variables:
+        #     point_coords.append(f"{var}={str(self.solutions[var])}")
+        # self.solution_point_label.setText(f"<b>Знайдені рішення у вигляді точки:</b> A( {", ".join(point_coords)} )")
 
-            first_variable = False
+        # self.determinant_display_label.setText(
+        #     f"<b>Значення визначника матриці Гессе (Δ):</b> {self.determinant_value}")
 
-        self.final_function_value_entry.clear()
+        # # --- Очищення та заповнення полів вводу для підстановки ---
+        # while self.substitution_variables_inputs_layout.count():
+        #     item = self.substitution_variables_inputs_layout.takeAt(0)
+        #     if item.widget():
+        #         item.widget().deleteLater()
+        #     elif item.layout():
+        #         while item.layout().count():
+        #             sub_item = item.layout().takeAt(0)
+        #             if sub_item.widget():
+        #                 sub_item.widget().deleteLater()
+        #         item.layout().deleteLater()
+        # self.variable_value_entries.clear()
+
+        # first_variable = True
+        # for var in sorted_variables:
+        #     if not first_variable:
+        #         comma_label = QLabel(", ")
+        #         self.substitution_variables_inputs_layout.addWidget(comma_label)
+
+        #     var_entry = QLineEdit()
+        #     var_entry.setPlaceholderText(f"{var}")
+        #     var_entry.setFixedWidth(60)
+        #     self.variable_value_entries[var] = var_entry
+        #     self.substitution_variables_inputs_layout.addWidget(var_entry)
+
+        #     first_variable = False
+
+        # self.final_function_value_entry.clear()
 
     def update_z_function_display(self):
         """Оновлює відображення функції поруч з Z."""
@@ -317,12 +450,15 @@ class LagrangeStep6(QWidget):
 
         calculated_value = func_expr.subs(user_substituted_values)
 
-        if abs(float(calculated_value) - entered_final_value) < 1e-6:
+        print(f"calculated_value: {calculated_value}")
+        print(f"entered_final_value: {entered_final_value}")
+
+        if round(float(calculated_value), 3) == round(float(entered_final_value), 3):
             self.function_value_feedback_label.setText(
-                f"<span style='color: green;'>Значення цільової функції обчислено правильно: F = {calculated_value.evalf(4)}!</span>")
+                f"<span style='color: green;'>Значення цільової функції обчислено правильно: F = {round(float(calculated_value), 3)}!</span>")
         else:
             self.function_value_feedback_label.setText(
-                f"<span style='color: red;'>Неправильне значення. Очікується: F = {calculated_value.evalf(4)}.</span>")
+                f"<span style='color: red;'>Неправильне значення. Очікується: F = {round(float(calculated_value), 3)}.</span>")
 
     def go_to_prev_step(self):
         self.switch_step(5)

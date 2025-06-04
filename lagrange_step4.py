@@ -3,6 +3,8 @@ import sympy as sp
 import matplotlib.pyplot as plt
 import io
 from PyQt6.QtGui import QPixmap, QImage
+from test_config import test_config_step4
+
 
 class LagrangeStep4(QWidget):
     def __init__(self, parent=None, switch_step_callback=None):
@@ -12,9 +14,6 @@ class LagrangeStep4(QWidget):
         self.first_derivatives_str = {}
         self.expected_second_derivatives = {}
         layout = QVBoxLayout()
-
-        # TODO remove
-        self.test = [0, 1, 1, 0]
 
         instruction_label = QLabel("<b>Етап 4: Введіть другі часткові похідні функції Лагранжа за змінними</b>")
         layout.addWidget(instruction_label)
@@ -110,13 +109,13 @@ class LagrangeStep4(QWidget):
             var1, var2 = self.variables[0], self.variables[1]
 
             labels_data = [
-                (f"$\\frac{{\\partial^2 L}}{{\\partial {var1}^2}}$ = ", (0, 0), (var1, var1)),
-                (f"$\\frac{{\\partial^2 L}}{{\\partial {var1} \\partial {var2}}}$ = ", (0, 2), (var1, var2)),
-                (f"$\\frac{{\\partial^2 L}}{{\\partial {var2} \\partial {var1}}}$ = ", (1, 0), (var2, var1)),
-                (f"$\\frac{{\\partial^2 L}}{{\\partial {var2}^2}}$ = ", (1, 2), (var2, var2)),
+                (f"$\\frac{{\\partial^2 L}}{{\\partial {var1}^2}}$ = ", (0, 0), (var1, var1), 0),
+                (f"$\\frac{{\\partial^2 L}}{{\\partial {var1} \\partial {var2}}}$ = ", (0, 2), (var1, var2), 1),
+                (f"$\\frac{{\\partial^2 L}}{{\\partial {var2} \\partial {var1}}}$ = ", (1, 0), (var2, var1), 2),
+                (f"$\\frac{{\\partial^2 L}}{{\\partial {var2}^2}}$ = ", (1, 2), (var2, var2), 3),
             ]
 
-            for text_latex, (row, col), derivative_vars in labels_data:
+            for text_latex, (row, col), derivative_vars, index in labels_data:
                 try:
                     fig = plt.figure(figsize=(3, 1), dpi=100)
                     fig.text(0.05, 0.5, text_latex, fontsize=12)
@@ -135,7 +134,7 @@ class LagrangeStep4(QWidget):
                     self.derivatives_grid.addWidget(label, row, col)
 
                     entry = QLineEdit()
-                    entry.setText(str(self.test[row * 2 + col]))
+                    entry.setText(str(test_config_step4[index]))
 
                     self.derivatives_grid.addWidget(entry, row, col + 1)
                     self.second_derivative_entries[derivative_vars] = entry
@@ -165,12 +164,13 @@ class LagrangeStep4(QWidget):
         incorrect_derivatives = []
 
         for (var1, var2), entered_value in entered_derivatives.items():
-            expected_value_str = self.expected_second_derivatives.get((var1, var2), "").lower()
-            entered_value_str = str(entered_value).lower() # Перетворюємо введений текст на нижній регістр
+            expected_value_str = self.expected_second_derivatives.get((var1, var2), "").lower().replace(" ", "")
+            entered_value_str = str(entered_value).lower().replace(" ", "") # Перетворюємо введений текст на нижній регістр
 
             try:
                 expected_float = float(expected_value_str)
                 entered_float = float(entered_value_str)
+
                 if not sp.Abs(expected_float - entered_float) < 1e-6:
                     all_correct = False
                     incorrect_derivatives.append(f"∂²L/∂{var1}∂{var2}")
@@ -182,8 +182,10 @@ class LagrangeStep4(QWidget):
         if all_correct:
             self.feedback_label.setText("Другі похідні введено правильно!")
             # Можна тут активувати кнопку "Далі"
+            print("Другі похідні введено правильно!")
         else:
             self.feedback_label.setText(feedback_text + ", ".join(incorrect_derivatives))
+            print("Другі похідні введено неправильно!")
 
     def go_to_prev_step(self):
         self.switch_step(3)

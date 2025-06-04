@@ -4,6 +4,8 @@ import sympy as sp
 import matplotlib.pyplot as plt
 import io
 from PyQt6.QtGui import QPixmap, QImage
+from test_config import test_config_step3
+import json 
 
 class LagrangeStep3(QWidget):
     def __init__(self, parent, switch_step_callback):
@@ -18,9 +20,6 @@ class LagrangeStep3(QWidget):
         self.feedback_label = None
         self.next_button = None
         self.main_window = parent # Додано для доступу до MainWindow
-
-        # TODO remove
-        self.test = ["5/4", "5/2", "5/4"]
 
         layout = QVBoxLayout(self)
 
@@ -83,6 +82,12 @@ class LagrangeStep3(QWidget):
         self._setup_solution_fields()
         self._update_equation_choices()
 
+        # symbols_to_solve = self.var_symbols + list(self.lambda_syms)
+        # try:
+        #     self.precomputed_solutions = solve(self.current_equations_sympy, symbols_to_solve)
+        # except Exception as e:
+        #     print(f"Ошибка при вычислении решений: {e}")
+        #     self.precomputed_solutions = None
     def _display_equations(self):
         # Очищаємо попередні віджети рівнянь
         for i in reversed(range(self.equations_grid.count())):
@@ -139,6 +144,14 @@ class LagrangeStep3(QWidget):
         self.substitution_target_combo.currentIndexChanged.connect(self._disable_substitution_source)
 
     def _disable_substitution_target(self, index):
+        # for i in range(self.substitution_target_combo.count()):
+        #     item = self.substitution_target_combo.model().item(i)
+        #     if item is not None:
+        #         item.setEnabled(True)
+        # item = self.substitution_target_combo.model().item(index)
+        # if item is not None:
+        #     item.setEnabled(False)
+            
         for i in range(self.substitution_target_combo.count()):
             self.substitution_target_combo.model().item(i).setEnabled(True)
         self.substitution_target_combo.model().item(index).setEnabled(False)
@@ -201,7 +214,7 @@ class LagrangeStep3(QWidget):
         for symbol_str in all_symbols_str:
             label = QLabel(f"{symbol_str} = ")
             entry = QLineEdit()
-            entry.setText(self.test[row])
+            entry.setText(test_config_step3[row])
 
             self.solutions_grid_layout.addWidget(label, row, 0)
             self.solutions_grid_layout.addWidget(entry, row, 1)
@@ -220,6 +233,8 @@ class LagrangeStep3(QWidget):
 
         try:
             solutions = solve(self.current_equations_sympy, symbols_to_solve)
+
+            # solutions = self.precomputed_solutions
             print(f"Знайдені розв'язки: {solutions}") # Для налагодження
             print(f"Введені розв'язки: {entered_solutions}") # Для налагодження
             print(f"Символи для розв'язання: {symbols_to_solve}") # Для налагодження
@@ -236,19 +251,25 @@ class LagrangeStep3(QWidget):
 
                 for symbol in symbols_to_solve:
                     symbol_str = str(symbol)
-                    expected_solution = solution_dict.get(symbol)
+                    expected_solution_sympy = solution_dict.get(symbol)
                     entered_solution_str = entered_solutions.get(symbol_str, "").strip().lower()
 
-                    if expected_solution is not None:
-                        expected_solution_str = str(expected_solution).lower()
+                    if expected_solution_sympy is not None:
+                        expected_solution_str = str(expected_solution_sympy).lower()
                         try:
-                            expected_val = float(expected_solution_str)
-                            entered_val = float(entered_solution_str)
-                            if not sp.Abs(expected_val - entered_val) < 1e-6:
+                            expected_val_numeric = float(sympify(str(expected_solution_sympy)).evalf())
+                            entered_val_numeric = float(sympify(entered_solution_str).evalf())
+                            
+                            if not sp.Abs(expected_val_numeric - entered_val_numeric) < 1e-6:
                                 all_correct = False
                                 incorrect_solutions.append(symbol_str)
                         except ValueError:
-                            if expected_solution_str != entered_solution_str:
+                            # Если не удалось преобразовать в float (например, одно из значений не числовое или ошибка sympify)
+                            # Сравниваем как строки, предварительно обработанные sympify для канонической формы
+                            print(f"Ошибка при числовом сравнении для {symbol_str}: {e}. Сравниваем как строки.")
+                            expected_str_canon = str(sympify(str(expected_solution_sympy))).lower().replace(" ", "")
+                            entered_str_canon = str(sympify(entered_solution_str)).lower().replace(" ", "")
+                            if expected_str_canon != entered_str_canon:
                                 all_correct = False
                                 incorrect_solutions.append(symbol_str)
                     else:
@@ -283,9 +304,43 @@ class LagrangeStep3(QWidget):
     def go_to_next_step(self):
         print("Викликаю switch_step з 3-го етапу...")
         # Отримуємо введені розв'язки
-        entered_solutions = {var: entry.text() for var, entry in self.solution_entries.items()}
-        # Зберігаємо розв'язки в головному вікні
-        self.main_window.solution_step3 = entered_solutions
+        entered_solutions_by_user = {
+            var: entry.text().strip() for var, entry in self.solution_entries.items()
+        }
+
+        # Вычисляем все возможные решения системы (если их несколько)
+        symbols_to_solve = self.var_symbols + list(self.lambda_syms)
+        # Используем dict=True для получения словарей
+        raw_sympy_solutions = solve(self.current_equations_sympy, symbols_to_solve, dict=True)
+        
+        processed_solutions_list_basic_types = [] # Переименовано для ясности
+        if raw_sympy_solutions:
+            solution_list_of_sympy_dicts = []
+            if isinstance(raw_sympy_solutions, dict): # Если solve вернул один словарь (одно решение)
+                solution_list_of_sympy_dicts = [raw_sympy_solutions]
+            elif isinstance(raw_sympy_solutions, list): # Если solve вернул список словарей
+                solution_list_of_sympy_dicts = raw_sympy_solutions
+            
+            for sol_sympy_dict in solution_list_of_sympy_dicts:
+                current_solution_basic_types_dict = {}
+                for var_symbol, value_sympy in sol_sympy_dict.items():
+                    current_solution_basic_types_dict[str(var_symbol)] = {
+                        'fraction_str': str(value_sympy) ,
+                        'float_val':  float(value_sympy.evalf())
+                    }
+                if current_solution_basic_types_dict: # Добавляем, только если словарь не пустой
+                    processed_solutions_list_basic_types.append(current_solution_basic_types_dict)
+
+        print("Все найденные решения (только базовые типы, JSON-like формат):")
+        if not processed_solutions_list_basic_types:
+            print("[]") 
+        else:
+            formatted_json_string = json.dumps(processed_solutions_list_basic_types, indent=2, ensure_ascii=False)
+            print(formatted_json_string)
+        
+        self.main_window.solution_step3 = entered_solutions_by_user 
+        self.main_window.all_solutions_step3 = processed_solutions_list_basic_types # Сохраняем список с базовыми типами
+
         self.switch_step(4)
         print("Повернення з switch_step у 3-му етапі.")
     

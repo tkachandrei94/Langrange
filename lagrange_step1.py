@@ -2,6 +2,7 @@ import re
 from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QLineEdit, QGridLayout, QHBoxLayout
 from PyQt6.QtGui import QRegularExpressionValidator
 from PyQt6.QtCore import QRegularExpression
+from test_config import test_config_step1
 
 class LagrangeStep1(QWidget):
     def __init__(self, parent, switch_step_callback):
@@ -23,12 +24,8 @@ class LagrangeStep1(QWidget):
         self.function_layout = QHBoxLayout()
         self.function_label = QLabel("Цільова функція (F)(")
 
-        # TODO 
-        self.test1 = "x * y"
-        self.test2 = "2 * x + y - 5"
-
         self.function_entry = QLineEdit()
-        self.function_entry.setText(self.test1)
+        self.function_entry.setText(test_config_step1[0])
         self.function_layout.addWidget(self.function_label)
         self.function_layout.addWidget(self.function_entry)
         self.layout.addLayout(self.function_layout)
@@ -61,7 +58,7 @@ class LagrangeStep1(QWidget):
         for i in range(self.num_constraints):
             constraint_label = QLabel(f"Обмеження {i + 1} (g{i + 1})({', '.join(self.variables)}):")
             constraint_entry = QLineEdit()
-            constraint_entry.setText(self.test2)
+            constraint_entry.setText(test_config_step1[i + 1])
             self.constraints_grid_layout.addWidget(constraint_label, i, 0)
             self.constraints_grid_layout.addWidget(constraint_entry, i, 1)
             self.constraint_entries.append(constraint_entry)

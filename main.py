@@ -65,11 +65,12 @@ class MainWindow(QMainWindow):
         self.variables = None
         self.lambda_symbols_step3 = None
         self.solution_step3 = None  # Цей атрибут оновлюється з 3-го етапу і має бути числовим
-        self.lagrange_function_str_step2 = None
+        self.all_solutions_step3 = None  # или []
+        self.solution_step3_solutionslagrange_function_str_step2 = None
         self.second_derivatives_step4 = None
         self.determinant_step5 = None
         self.extreme_point_step5 = None  # Додаємо для зберігання extreme_point з 5-го етапу
-
+        
         self.stacked_widget.setCurrentIndex(self.current_step)
 
     def calculate_second_derivatives(self, lagrange_str, variables_with_lambda):
@@ -107,7 +108,9 @@ class MainWindow(QMainWindow):
         return second_derivatives
 
     def switch_step(self, next_step, num_variables=2, num_constraints=1, function_str=None, constraint_strs=None,
-                    variables=None, second_derivatives=None, determinant=None, extreme_point=None):
+                    variables=None, second_derivatives=None, determinant=None, extreme_point=None, all_solutions_step3=None):
+        
+        print(f"switch_step_extreme_point : {extreme_point}")
         print(
             f"Викликано switch_step з next_step = {next_step}, num_variables = {num_variables}, num_constraints = {num_constraints}, function_str={function_str}, constraint_strs={constraint_strs}, variables={variables}, second_derivatives={second_derivatives}, determinant={determinant}, extreme_point={extreme_point}")
         self.current_step = next_step
@@ -124,14 +127,20 @@ class MainWindow(QMainWindow):
             self.second_derivatives_step4 = second_derivatives
         if determinant is not None:
             self.determinant_step5 = determinant
-        if extreme_point is not None:  # <= ВАЖЛИВО: Оновлюємо extreme_point_step5 тут
+        if extreme_point is not None:
             self.extreme_point_step5 = extreme_point
 
         if self.current_step == 1:
+            print("\n--------------------------------")
+            print("Перехід до 1-го етапу...")
+            
             self.variables = ['x', 'y', 'z', 'q', 'w'][:num_variables]
             self.step1_widget.setup_input_fields(self.variables, num_constraints)
 
         elif self.current_step == 2:
+            print("\n--------------------------------")
+            print("Перехід до 2-го етапу...")
+            
             if self.function_str is not None and self.constraint_strs is not None and self.variables is not None:
                 self.step2_widget.set_function_constraints(self.function_str, self.constraint_strs, self.variables)
 
@@ -157,16 +166,22 @@ class MainWindow(QMainWindow):
                 return
 
         elif self.current_step == 3:
+            print("\n--------------------------------")
+            print("Перехід до 3-го етапу...")
+            
             derivatives, var_symbols, lambda_syms = self.step2_widget.get_derivatives_data()
             self.step3_widget.set_derivatives(derivatives, var_symbols, lambda_syms)
             self.lambda_symbols_step3 = lambda_syms
             # solution_step3 оновлюється безпосередньо з 3-го етапу через self.main_window.solution_step3
 
         elif self.current_step == 4:
+            print("\n--------------------------------")
             print("Перехід до 4-го етапу...")
+            
             QTimer.singleShot(0, self._initialize_step4)
 
         elif self.current_step == 5:
+            print("\n--------------------------------")
             print("Перехід до 5-го етапу...")
             if self.second_derivatives_step4:
                 # Передаємо extreme_point_step3 (solution_step3) на 5-й етап
@@ -191,12 +206,14 @@ class MainWindow(QMainWindow):
                 print("Помилка: Обчислені другі похідні не отримано для 5-го етапу.")
 
         elif self.current_step == 6:
+            print("\n--------------------------------")
             print("Перехід до 6-го етапу...")
             print(f"self.determinant_step5 (перед передачею): {self.determinant_step5}")
             print(
                 f"self.extreme_point_step5 (перед передачею): {self.extreme_point_step5}")  # Використовуємо extreme_point_step5
             print(f"self.function_str (перед передачею): {self.function_str}")
             print(f"self.variables (перед передачею): {self.variables}")
+            print(f"self.solution_step3 (перед передачею): {self.solution_step3}")
 
             if (self.determinant_step5 is not None and
                     self.extreme_point_step5 and  # Перевіряємо наявність extreme_point_step5
@@ -205,7 +222,7 @@ class MainWindow(QMainWindow):
 
                 self.step6_widget.set_data(
                     self.determinant_step5,
-                    self.extreme_point_step5,  # Передаємо extreme_point_step5
+                    self.extreme_point_step5,  # Передаємо extreme_point_step5 (solution_step3)
                     self.function_str,
                     self.variables
                 )

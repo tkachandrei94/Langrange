@@ -1,4 +1,5 @@
 from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSpinBox, QPushButton, QHBoxLayout
+from test_config import test_config_step0
 
 class LagrangeStep0(QWidget):
     def __init__(self, parent, switch_step_callback):
@@ -6,15 +7,20 @@ class LagrangeStep0(QWidget):
         self.switch_step = switch_step_callback
 
         layout = QVBoxLayout(self)
+        default_num_variables = 2
+        default_num_constraints = 1
+        
+        num_variables = test_config_step0[0] or default_num_variables
+        num_constraints = test_config_step0[1] or default_num_constraints
 
         # Введення кількості змінних
         variables_layout = QHBoxLayout()
         variables_label = QLabel("Введіть кількість змінних (x, y, z, q, w):")
         variables_layout.addWidget(variables_label)
         self.num_variables_spinbox = QSpinBox()
-        self.num_variables_spinbox.setMinimum(2)  # Мінімум 2 змінні (x, y)
+        self.num_variables_spinbox.setMinimum(2)
         self.num_variables_spinbox.setMaximum(5)
-        self.num_variables_spinbox.setValue(2)  # Значення за замовчуванням
+        self.num_variables_spinbox.setValue(num_variables )  # Значення за замовчуванням
         variables_layout.addWidget(self.num_variables_spinbox)
         layout.addLayout(variables_layout)
 
@@ -25,7 +31,7 @@ class LagrangeStep0(QWidget):
         self.num_constraints_spinbox = QSpinBox()
         self.num_constraints_spinbox.setMinimum(0)  # Може бути 0 обмежень
         self.num_constraints_spinbox.setMaximum(5)
-        self.num_constraints_spinbox.setValue(1)  # Значення за замовчуванням
+        self.num_constraints_spinbox.setValue(num_constraints)  # Значення за замовчуванням
         constraints_layout.addWidget(self.num_constraints_spinbox)
         layout.addLayout(constraints_layout)
 
@@ -36,6 +42,10 @@ class LagrangeStep0(QWidget):
         self.setLayout(layout)
 
     def go_to_next_step(self):
+        print("LagrangeStep0 go_to_next_step")
+        print("num_variables:", self.num_variables_spinbox.value())
+        print("num_constraints:", self.num_constraints_spinbox.value())
+
         num_variables = self.num_variables_spinbox.value()
         num_constraints = self.num_constraints_spinbox.value()
         self.switch_step(1, num_variables=num_variables, num_constraints=num_constraints)

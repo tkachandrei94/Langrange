@@ -4,7 +4,7 @@ from PyQt6.QtGui import QPixmap, QImage
 import io
 import numpy as np
 from sympy import symbols, sympify  # Додаємо імпорти для роботи з символьними виразами
-
+from test_config import test_config_step5
 
 class LagrangeStep5(QWidget):
     def __init__(self, parent=None, switch_step_callback=None):
@@ -15,9 +15,6 @@ class LagrangeStep5(QWidget):
         self.extreme_point = {}  # Додаємо атрибут для зберігання екстремальної точки
         self.determinant_value_checked = None  # Додаємо атрибут для збереження перевіреного визначника
         layout = QVBoxLayout()
-
-        # TODO remove
-        self.test = -1
 
         instruction_label = QLabel("<b>Етап 5: Аналіз матриці Гессе</b><br>"
                                    "Перегляньте матрицю Гессе та обчисліть її визначник.")
@@ -35,7 +32,7 @@ class LagrangeStep5(QWidget):
         layout.addWidget(determinant_label)  # Додаємо до основного макету
 
         self.determinant_entry = QLineEdit()
-        self.determinant_entry.setText(str(self.test))
+        self.determinant_entry.setText(str(test_config_step5[0]))
         
         layout.addWidget(self.determinant_entry)  # Додаємо до основного макету
 
