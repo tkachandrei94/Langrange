@@ -163,18 +163,27 @@ class LagrangeStep4(QWidget):
         feedback_text = "Неправильно введені другі похідні: "
         incorrect_derivatives = []
 
+        def normalize_lambda(s):
+            return (
+                s.replace('lambda₁', 'λ1')
+                 .replace('lambda1', 'λ1')
+                 .replace('λ₁', 'λ1')
+            )
+
         for (var1, var2), entered_value in entered_derivatives.items():
             expected_value_str = self.expected_second_derivatives.get((var1, var2), "").lower().replace(" ", "")
-            entered_value_str = str(entered_value).lower().replace(" ", "") # Перетворюємо введений текст на нижній регістр
+            entered_value_str = str(entered_value).lower().replace(" ", "")
+
+            expected_value_str = normalize_lambda(expected_value_str)
+            entered_value_str = normalize_lambda(entered_value_str)
 
             try:
-                expected_float = float(expected_value_str)
-                entered_float = float(entered_value_str)
-
+                expected_float = float(sp.sympify(expected_value_str))
+                entered_float = float(sp.sympify(entered_value_str))
                 if not sp.Abs(expected_float - entered_float) < 1e-6:
                     all_correct = False
                     incorrect_derivatives.append(f"∂²L/∂{var1}∂{var2}")
-            except ValueError:
+            except (ValueError, TypeError):
                 if expected_value_str != entered_value_str:
                     all_correct = False
                     incorrect_derivatives.append(f"∂²L/∂{var1}∂{var2}")
@@ -185,7 +194,7 @@ class LagrangeStep4(QWidget):
             print("Другі похідні введено правильно!")
         else:
             self.feedback_label.setText(feedback_text + ", ".join(incorrect_derivatives))
-            print("Другі похідні введено неправильно!")
+            print(f"Другі похідні введено неправильно! {feedback_text + ', '.join(incorrect_derivatives)}")
 
     def go_to_prev_step(self):
         self.switch_step(3)

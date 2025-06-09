@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt, QTimer
 import sympy as sp
 from sympy import symbols, sympify, diff
 import signal
-
+import json
 
 
 def signal_handler(sig, frame):
@@ -103,7 +103,8 @@ class MainWindow(QMainWindow):
 
                 diff_expr = diff(lagrange_expr, sym_var1, sym_var2)
                 second_derivatives[(var1_str, var2_str)] = str(diff_expr)
-        print(f"Обчислені другі похідні: {second_derivatives}")
+                second_derivatives_str = {str(k): v for k, v in second_derivatives.items()}
+                print(f"Обчислені другі похідні:\n{json.dumps(second_derivatives_str, indent=2, ensure_ascii=False)}")
         return second_derivatives
 
     def switch_step(self, next_step, num_variables=2, num_constraints=1, function_str=None, constraint_strs=None,
@@ -344,8 +345,14 @@ class MainWindow(QMainWindow):
         # Принимаем событие закрытия
         event.accept()
 
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+
+    # for debug
+    # app.setStyleSheet("* { border: 1px solid red; }")
+
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+

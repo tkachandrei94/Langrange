@@ -78,16 +78,17 @@ class LagrangeStep3(QWidget):
         self.current_equations_sympy = [Eq(sympify(eq), 0) for eq in derivatives]
         self.var_symbols = list(var_symbols)
         self.lambda_syms = list(lambda_syms)
+        
+        # Сначала очищаем комбобоксы
+        self.express_equation_combo.clear()
+        self.substitution_target_combo.clear()
+        self.express_variable_combo.clear()
+        
+        # Затем обновляем отображение
         self._display_equations()
         self._setup_solution_fields()
         self._update_equation_choices()
 
-        # symbols_to_solve = self.var_symbols + list(self.lambda_syms)
-        # try:
-        #     self.precomputed_solutions = solve(self.current_equations_sympy, symbols_to_solve)
-        # except Exception as e:
-        #     print(f"Ошибка при вычислении решений: {e}")
-        #     self.precomputed_solutions = None
     def _display_equations(self):
         # Очищаємо попередні віджети рівнянь
         for i in reversed(range(self.equations_grid.count())):
@@ -144,23 +145,32 @@ class LagrangeStep3(QWidget):
         self.substitution_target_combo.currentIndexChanged.connect(self._disable_substitution_source)
 
     def _disable_substitution_target(self, index):
-        # for i in range(self.substitution_target_combo.count()):
-        #     item = self.substitution_target_combo.model().item(i)
-        #     if item is not None:
-        #         item.setEnabled(True)
-        # item = self.substitution_target_combo.model().item(index)
-        # if item is not None:
-        #     item.setEnabled(False)
+        # Проверяем, что комбобокс и его модель существуют
+        if self.substitution_target_combo and self.substitution_target_combo.model():
+            # Сначала включаем все элементы
+            for i in range(self.substitution_target_combo.count()):
+                item = self.substitution_target_combo.model().item(i)
+                if item is not None:
+                    item.setEnabled(True)
             
-        for i in range(self.substitution_target_combo.count()):
-            self.substitution_target_combo.model().item(i).setEnabled(True)
-        self.substitution_target_combo.model().item(index).setEnabled(False)
+            # Затем отключаем выбранный элемент
+            item = self.substitution_target_combo.model().item(index)
+            if item is not None:
+                item.setEnabled(False)
 
     def _disable_substitution_source(self, index):
-        for i in range(self.express_equation_combo.count()):
-            self.express_equation_combo.model().item(i).setEnabled(True)
-        self.express_equation_combo.model().item(index).setEnabled(False)
-
+        # Проверяем, что комбобокс и его модель существуют
+        if self.express_equation_combo and self.express_equation_combo.model():
+            # Сначала включаем все элементы
+            for i in range(self.express_equation_combo.count()):
+                item = self.express_equation_combo.model().item(i)
+                if item is not None:
+                    item.setEnabled(True)
+            
+            # Затем отключаем выбранный элемент
+            item = self.express_equation_combo.model().item(index)
+            if item is not None:
+                item.setEnabled(False)
 
     def _update_variable_choices_for_expression(self, index=0):
         self.express_variable_combo.clear()

@@ -131,6 +131,8 @@ class LagrangeStep6(QWidget):
 
         self.extremum_feedback_label = QLabel("")
         main_layout.addWidget(self.extremum_feedback_label)
+        self.extremum_feedback_label.setWordWrap(True)
+        main_layout.addSpacing(5)
 
         self.function_value_feedback_label = QLabel("")
         main_layout.addWidget(self.function_value_feedback_label)
@@ -141,12 +143,12 @@ class LagrangeStep6(QWidget):
         main_layout.addWidget(self.check_function_value_button, alignment=Qt.AlignmentFlag.AlignLeft)
 
         self.conclusion_instruction_label = QLabel("<b>Зробіть висновок:</b><br>"
-                                                   "На основі значення визначника (Δ) та ваших знань, визначте, чи є знайдена точка локальним мінімумом, максимумом чи сідловою точкою.<br>"
+                                                   "На основі значення визначника ((Δ &lt; 0)) та ваших знань, визначте, чи є знайдена точка локальним мінімумом, максимумом чи сідловою точкою.<br>"
                                                    "<ul>"
-                                                   "<li>Якщо Δ > 0 і $L_{xx} > 0$ (або $F_{xx} > 0$), то це локальний мінімум.</li>"
-                                                   "<li>Якщо Δ > 0 і $L_{xx} < 0$ (або $F_{xx} < 0$), то це локальний максимум.</li>"
-                                                   "<li>Якщо Δ < 0, то це сідлова точка.</li>"
-                                                   "<li>Якщо Δ = 0, потрібен додатковий аналіз.</li>"
+                                                   "<li>Якщо (Δ &lt; 0) > 0 і $L_{xx} > 0$ (або $F_{xx} > 0$), то це локальний мінімум.</li>"
+                                                   "<li>Якщо (Δ &lt; 0) > 0 і $L_{xx} < 0$ (або $F_{xx} < 0$), то це локальний максимум.</li>"
+                                                   "<li>Якщо (Δ &lt; 0) < 0, то це сідлова точка.</li>"
+                                                   "<li>Якщо (Δ &lt; 0) = 0, потрібен додатковий аналіз.</li>"
                                                    "</ul>"
                                                    "*(Примітка: $L_{xx}$ - це друга часткова похідна функції Лагранжа за змінною x, або $F_{xx}$ для цільової функції, якщо обмежень немає і ви працюєте з нею напряму.)*")
         main_layout.addWidget(self.conclusion_instruction_label)
@@ -279,8 +281,9 @@ class LagrangeStep6(QWidget):
                 print(f"  var_name: {var_name}")
                 if var_name in current_solution_to_display:
                     val_data = current_solution_to_display[var_name]
-                    point_coords.append(f"{var_name}={val_data['fraction_str']}")
-                    
+                    rounded_val = round(float(val_data['float_val']), 3)
+                    point_coords.append(f"{var_name}={rounded_val}")      
+
                     var_entry = QLineEdit()
                     var_entry.setMinimumWidth(100)
                     var_entry.setPlaceholderText(f"{var_name}")
@@ -300,7 +303,7 @@ class LagrangeStep6(QWidget):
 
         # Визначник відображається незалежно від обраного рішення (поточна логіка)
         self.determinant_display_label.setText(
-            f"<b>Значення визначника матриці Гессе (Δ):</b> {self.determinant_value}")
+            f"<b>Значення визначника матриці Гессе ((Δ &lt; 0)):</b> {self.determinant_value}")
 
 
     def display_results(self):
@@ -325,7 +328,7 @@ class LagrangeStep6(QWidget):
         # self.solution_point_label.setText(f"<b>Знайдені рішення у вигляді точки:</b> A( {", ".join(point_coords)} )")
 
         # self.determinant_display_label.setText(
-        #     f"<b>Значення визначника матриці Гессе (Δ):</b> {self.determinant_value}")
+        #     f"<b>Значення визначника матриці Гессе ((Δ &lt; 0)):</b> {self.determinant_value}")
 
         # # --- Очищення та заповнення полів вводу для підстановки ---
         # while self.substitution_variables_inputs_layout.count():
@@ -390,14 +393,14 @@ class LagrangeStep6(QWidget):
 
         if correct_extremum_id == 0:
             self.extremum_feedback_label.setText(
-                "<span style='color: orange;'>Неможливо визначити тип екстремуму за значенням визначника (Δ = 0 або невідомий). Потрібен додатковий аналіз.</span>")
+                "<span style='color: orange;'>Неможливо визначити тип екстремуму за значенням визначника ((Δ &lt; 0) = 0 або невідомий). Потрібен додатковий аналіз.</span>")
         elif correct_extremum_id == 3:
             if user_choice_id == 3:
                 self.extremum_feedback_label.setText(
-                    "<span style='color: green;'>Вірно! Це сідлова точка (Δ < 0).</span>")
+                    "<div style='color: green;'>Вірно! Це сідлова точка (Δ &lt; 0) < 0). </div>")
             else:
                 self.extremum_feedback_label.setText(
-                    "<span style='color: red;'>Неправильно. При Δ < 0 це завжди сідлова точка.</span>")
+                    "<span style='color: red;'>Неправильно. При (Δ &lt; 0) < 0 це завжди сідлова точка.</span>")
         elif det > 0:
             if user_choice_id == 1:
                 self.extremum_feedback_label.setText(
@@ -407,7 +410,7 @@ class LagrangeStep6(QWidget):
                     "<span style='color: orange;'>Можливо вірно. Для точного визначення локального мінімуму потрібно перевірити $L_{xx} > 0$.</span>")
             else:
                 self.extremum_feedback_label.setText(
-                    "<span style='color: red;'>Неправильно. При Δ > 0 це завжди локальний екстремум (min або max), а не сідлова точка.</span>")
+                    "<span style='color: red;'>Неправильно. При (Δ &lt; 0) > 0 це завжди локальний екстремум (min або max), а не сідлова точка.</span>")
 
     def _check_function_value_internal(self):
         user_substituted_values = {}
