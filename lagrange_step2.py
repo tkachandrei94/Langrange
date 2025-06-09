@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QLineEdit, QHBoxLayout, QGridLayout
-from sympy import symbols, sympify, diff
+from sympy import symbols, sympify, diff, simplify
 from PyQt6.QtCore import Qt
 import sympy as sp
 from test_config import test_config_step2
@@ -152,13 +152,22 @@ class LagrangeStep2(QWidget):
             incorrect_derivatives = []
 
             for symbol_str, entry in self.derivative_entries.items():
-                entered_derivative_str = entry.text().replace(" ", "").lower()
+                entered_derivative_str = entry.text()
                 expected_symbol = symbols(symbol_str)
                 expected_derivative = expected_derivatives.get(expected_symbol, "")
-                expected_derivative_str = str(expected_derivative).replace(" ", "").lower()
-                print("entered_derivative_str:", entered_derivative_str, " | expected_derivative_str:", expected_derivative_str, " | check_result: :", entered_derivative_str == expected_derivative_str)
 
-                if entered_derivative_str != expected_derivative_str:
+                try:
+                    # Преобразуем оба выражения в sympy и упрощаем
+                    entered_expr = simplify(sympify(entered_derivative_str))
+                    expected_expr = simplify(sympify(str(expected_derivative)))
+                    check_result = entered_expr.equals(expected_expr)
+                except Exception as e:
+                    print(f"SymPy parse error: {e}")
+                    check_result = False
+
+                print("entered:", entered_derivative_str, "| expected:", expected_derivative, "| check_result:", check_result)
+
+                if not check_result:
                     all_correct = False
                     incorrect_derivatives.append(symbol_str)
 

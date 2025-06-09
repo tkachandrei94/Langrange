@@ -178,19 +178,18 @@ class LagrangeStep4(QWidget):
             entered_value_str = normalize_lambda(entered_value_str)
 
             try:
-                expected_float = float(sp.sympify(expected_value_str))
-                entered_float = float(sp.sympify(entered_value_str))
-                if not sp.Abs(expected_float - entered_float) < 1e-6:
+                expected_expr = sp.simplify(sp.sympify(expected_value_str))
+                entered_expr = sp.simplify(sp.sympify(entered_value_str))
+                if not expected_expr.equals(entered_expr):
                     all_correct = False
                     incorrect_derivatives.append(f"∂²L/∂{var1}∂{var2}")
-            except (ValueError, TypeError):
+            except Exception as e:
                 if expected_value_str != entered_value_str:
                     all_correct = False
                     incorrect_derivatives.append(f"∂²L/∂{var1}∂{var2}")
 
         if all_correct:
             self.feedback_label.setText("Другі похідні введено правильно!")
-            # Можна тут активувати кнопку "Далі"
             print("Другі похідні введено правильно!")
         else:
             self.feedback_label.setText(feedback_text + ", ".join(incorrect_derivatives))
