@@ -3,10 +3,13 @@ from sympy import symbols, sympify, diff, simplify
 from PyQt6.QtCore import Qt
 import sympy as sp
 from test_config import test_config_step2
+from styles import MAIN_STYLE, STEP_TITLE_STYLE, INACTIVE_NEXT_BUTTON_STYLE, ACTIVE_NEXT_BUTTON_STYLE, CONCLUSION_CONTAINER_STYLE, CONCLUSION_TITLE_STYLE, FEEDBACK_STYLE, NAVIGATION_BUTTON_STYLE
 
 class LagrangeStep2(QWidget):
     def __init__(self, parent, switch_step_callback):
         super().__init__(parent)
+        self.setStyleSheet(MAIN_STYLE)
+        self.note_label = None
         self.switch_step = switch_step_callback
         self.function_str = ""
         self.constraint_strs = []
@@ -23,9 +26,11 @@ class LagrangeStep2(QWidget):
 
         instruction_label = QLabel("<b>Етап 2: Знаходження частинних похідних</b><br>"
                                    "Будь ласка, знайдіть та введіть частинні похідні функції Лагранжа:")
+        instruction_label.setStyleSheet(STEP_TITLE_STYLE)
         layout.addWidget(instruction_label)
 
         self.lagrange_function_label = QLabel("Функція Лагранжа: ")
+        self.lagrange_function_label.setStyleSheet(STEP_TITLE_STYLE)
         layout.addWidget(self.lagrange_function_label)
 
         self.derivatives_grid_layout = QGridLayout()
@@ -36,15 +41,19 @@ class LagrangeStep2(QWidget):
         layout.addWidget(self.check_button)
 
         self.feedback_label = QLabel("")
+        self.feedback_label.setStyleSheet(FEEDBACK_STYLE)
         layout.addWidget(self.feedback_label)
 
         navigation_layout = QHBoxLayout()
         self.prev_button = QPushButton("Назад")
         self.prev_button.setFixedHeight(50)
         self.prev_button.clicked.connect(self.go_to_prev_step)
+        self.prev_button.setStyleSheet(NAVIGATION_BUTTON_STYLE)
         navigation_layout.addWidget(self.prev_button)
 
         self.next_button = QPushButton("Далі")
+        self.next_button.setFixedHeight(50)
+        self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
         self.next_button.setEnabled(False)
         self.next_button.clicked.connect(self.go_to_next_step)
         navigation_layout.addWidget(self.next_button)
@@ -79,11 +88,17 @@ class LagrangeStep2(QWidget):
             self.lagrange_function_label.setText(f"Функція Лагранжа: {str(lagrange_expr)}")
             self.setup_derivative_fields(var_symbols, self.lambda_symbols_internal)
 
-            # Оновлюємо примітку, роблячи символ лямбда частиною тексту
+            # --- Удаляем старое примечание, если оно есть ---
+            if self.note_label is not None:
+                self.layout.removeWidget(self.note_label)
+                self.note_label.deleteLater()
+                self.note_label = None
+
+            # --- Добавляем новое примечание ---
             note_label_text = "<br><b>Примітка:</b> Для введення символів лямбда (λ1, λ2, ...) використовуйте <b>λ1</b>, <b>λ2</b> і так далі."
-            note_label = QLabel(note_label_text)
-            note_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse) # Додаємо можливість виділення тексту
-            self.layout.addWidget(note_label)
+            self.note_label = QLabel(note_label_text)
+            self.note_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            self.layout.addWidget(self.note_label)
 
         except Exception as e:
             self.lagrange_function_label.setText(f"Помилка при формуванні функції Лагранжа: {e}")
@@ -101,9 +116,11 @@ class LagrangeStep2(QWidget):
         print("lambda_syms:", lambda_syms)
         for var in var_symbols:
             label = QLabel(f"dL/d{var} = ")
-            entry = QLineEdit()
-            entry.setText(test_config_step2[row] if test_config_step2 else "")
+            label.setStyleSheet(STEP_TITLE_STYLE)
 
+            entry = QLineEdit()
+            entry.setStyleSheet(STEP_TITLE_STYLE)
+            entry.setText(test_config_step2[row] if test_config_step2 else "")
             self.derivatives_grid_layout.addWidget(label, row, 0)
             self.derivatives_grid_layout.addWidget(entry, row, 1)
             self.derivative_entries[str(var)] = entry
@@ -111,7 +128,10 @@ class LagrangeStep2(QWidget):
 
         for lam in lambda_syms:
             label = QLabel(f"dL/d{lam} = ") # Використовуємо безпосередньо символ λ
+            label.setStyleSheet(STEP_TITLE_STYLE)
+
             entry = QLineEdit()
+            entry.setStyleSheet(STEP_TITLE_STYLE)
             entry.setText(test_config_step2[row] if test_config_step2 else "")
             self.derivatives_grid_layout.addWidget(label, row, 0)
             self.derivatives_grid_layout.addWidget(entry, row, 1)
@@ -170,11 +190,14 @@ class LagrangeStep2(QWidget):
 
                 if not check_result:
                     all_correct = False
+                    self.next_button.setEnabled(False)
+                    self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
                     incorrect_derivatives.append(symbol_str)
 
             if all_correct:
                 self.feedback_label.setText("Усі похідні введено правильно!")
                 self.next_button.setEnabled(True)
+                self.next_button.setStyleSheet(ACTIVE_NEXT_BUTTON_STYLE)
                 self.calculated_derivatives = {str(k): str(v) for k, v in expected_derivatives.items()}
             else:
                 self.feedback_label.setText(feedback_text + ", ".join(incorrect_derivatives))

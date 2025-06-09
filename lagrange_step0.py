@@ -1,9 +1,11 @@
 from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSpinBox, QPushButton, QHBoxLayout
 from test_config import test_config_step0
+from styles import MAIN_STYLE, STEP_TITLE_STYLE, CONCLUSION_CONTAINER_STYLE, CONCLUSION_TITLE_STYLE, FEEDBACK_STYLE, NAVIGATION_BUTTON_STYLE
 
 class LagrangeStep0(QWidget):
     def __init__(self, parent, switch_step_callback):
         super().__init__(parent)
+        self.setStyleSheet(MAIN_STYLE)
         self.switch_step = switch_step_callback
 
         layout = QVBoxLayout(self)
@@ -13,9 +15,12 @@ class LagrangeStep0(QWidget):
         num_variables = test_config_step0[0] if test_config_step0 else default_num_variables
         num_constraints = test_config_step0[1] if test_config_step0 else default_num_constraints
 
+        layout.addStretch()
+
         # Введення кількості змінних
         variables_layout = QHBoxLayout()
         variables_label = QLabel("Введіть кількість змінних (x, y, z, q, w):")
+        variables_label.setStyleSheet(STEP_TITLE_STYLE)
         variables_layout.addWidget(variables_label)
         self.num_variables_spinbox = QSpinBox()
         self.num_variables_spinbox.setMinimum(2)
@@ -27,13 +32,16 @@ class LagrangeStep0(QWidget):
         # Введення кількості обмежень
         constraints_layout = QHBoxLayout()
         constraints_label = QLabel("Введіть кількість обмежень:")
+        constraints_label.setStyleSheet(STEP_TITLE_STYLE)
         constraints_layout.addWidget(constraints_label)
         self.num_constraints_spinbox = QSpinBox()
         self.num_constraints_spinbox.setMinimum(0)  # Може бути 0 обмежень
         self.num_constraints_spinbox.setMaximum(5)
         self.num_constraints_spinbox.setValue(num_constraints)  # Значення за замовчуванням
         constraints_layout.addWidget(self.num_constraints_spinbox)
+
         layout.addLayout(constraints_layout)
+        layout.addStretch()
 
         self.next_button = QPushButton("Далі")
         self.next_button.setFixedHeight(50)

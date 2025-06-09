@@ -5,6 +5,7 @@ import sympy as sp
 from sympy import symbols, sympify, diff
 import signal
 import json
+from styles import MAIN_STYLE
 
 
 def signal_handler(sig, frame):
@@ -38,6 +39,8 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Розв'язання методом множників Лагранжа")
         self.setGeometry(100, 100, 800, 600)
+        self.setStyleSheet(MAIN_STYLE)  # Применяем основной стиль
+
 
         self.stacked_widget = QStackedWidget()
         self.setCentralWidget(self.stacked_widget)
