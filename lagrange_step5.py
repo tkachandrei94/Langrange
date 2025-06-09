@@ -32,7 +32,7 @@ class LagrangeStep5(QWidget):
         layout.addWidget(determinant_label)  # Додаємо до основного макету
 
         self.determinant_entry = QLineEdit()
-        self.determinant_entry.setText(str(test_config_step5[0]))
+        self.determinant_entry.setText(str(test_config_step5[0]) if test_config_step5 else "")
         
         layout.addWidget(self.determinant_entry)  # Додаємо до основного макету
 

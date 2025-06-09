@@ -134,7 +134,7 @@ class LagrangeStep4(QWidget):
                     self.derivatives_grid.addWidget(label, row, col)
 
                     entry = QLineEdit()
-                    entry.setText(str(test_config_step4[index]))
+                    entry.setText(str(test_config_step4[index]) if test_config_step4 else "")
 
                     self.derivatives_grid.addWidget(entry, row, col + 1)
                     self.second_derivative_entries[derivative_vars] = entry

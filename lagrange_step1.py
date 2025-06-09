@@ -25,7 +25,7 @@ class LagrangeStep1(QWidget):
         self.function_label = QLabel("Цільова функція (F)(")
 
         self.function_entry = QLineEdit()
-        self.function_entry.setText(test_config_step1[0])
+        self.function_entry.setText(test_config_step1[0] if test_config_step1 else "")
         self.function_layout.addWidget(self.function_label)
         self.function_layout.addWidget(self.function_entry)
         self.layout.addLayout(self.function_layout)
@@ -58,7 +58,7 @@ class LagrangeStep1(QWidget):
         for i in range(self.num_constraints):
             constraint_label = QLabel(f"Обмеження {i + 1} (g{i + 1})({', '.join(self.variables)}):")
             constraint_entry = QLineEdit()
-            constraint_entry.setText(test_config_step1[i + 1])
+            constraint_entry.setText(test_config_step1[i + 1] if test_config_step1 else "")
             self.constraints_grid_layout.addWidget(constraint_label, i, 0)
             self.constraints_grid_layout.addWidget(constraint_entry, i, 1)
             self.constraint_entries.append(constraint_entry)

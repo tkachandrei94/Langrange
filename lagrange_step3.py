@@ -224,7 +224,7 @@ class LagrangeStep3(QWidget):
         for symbol_str in all_symbols_str:
             label = QLabel(f"{symbol_str} = ")
             entry = QLineEdit()
-            entry.setText(test_config_step3[row])
+            entry.setText(test_config_step3[row] if test_config_step3 else "")
 
             self.solutions_grid_layout.addWidget(label, row, 0)
             self.solutions_grid_layout.addWidget(entry, row, 1)

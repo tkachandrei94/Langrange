@@ -10,8 +10,8 @@ class LagrangeStep0(QWidget):
         default_num_variables = 2
         default_num_constraints = 1
         
-        num_variables = test_config_step0[0] or default_num_variables
-        num_constraints = test_config_step0[1] or default_num_constraints
+        num_variables = test_config_step0[0] if test_config_step0 else default_num_variables
+        num_constraints = test_config_step0[1] if test_config_step0 else default_num_constraints
 
         # Введення кількості змінних
         variables_layout = QHBoxLayout()

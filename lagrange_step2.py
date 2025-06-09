@@ -101,7 +101,7 @@ class LagrangeStep2(QWidget):
         for var in var_symbols:
             label = QLabel(f"dL/d{var} = ")
             entry = QLineEdit()
-            entry.setText(test_config_step2[row])
+            entry.setText(test_config_step2[row] if test_config_step2 else "")
 
             self.derivatives_grid_layout.addWidget(label, row, 0)
             self.derivatives_grid_layout.addWidget(entry, row, 1)
@@ -111,7 +111,7 @@ class LagrangeStep2(QWidget):
         for lam in lambda_syms:
             label = QLabel(f"dL/d{lam} = ") # Використовуємо безпосередньо символ λ
             entry = QLineEdit()
-            entry.setText(test_config_step2[row])
+            entry.setText(test_config_step2[row] if test_config_step2 else "")
             self.derivatives_grid_layout.addWidget(label, row, 0)
             self.derivatives_grid_layout.addWidget(entry, row, 1)
             self.derivative_entries[str(lam)] = entry
