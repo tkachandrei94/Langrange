@@ -171,11 +171,28 @@ class MainWindow(QMainWindow):
             derivatives, var_symbols, lambda_syms = self.step2_widget.get_derivatives_data()
             self.step3_widget.set_derivatives(derivatives, var_symbols, lambda_syms)
             self.lambda_symbols_step3 = lambda_syms
-            # solution_step3 оновлюється безпосередньо з 3-го етапу через self.main_window.solution_step3
 
         elif self.current_step == 4:
             print("\n--------------------------------")
             print("Перехід до 4-го етапу...")
+            
+            print(f"self.solution_step3: {self.solution_step3}")
+            if not self.solution_step3:
+                print("Помилка: Розв'язки не знайдено")
+                return
+            
+            try:
+                numeric_solution = {}
+                for key, value in self.solution_step3.items():
+                    print(f"Перетворення {key} = {value}")
+                    numeric_value = float(sympify(str(value)))
+                    print(f"Результат: {numeric_value}")
+                    numeric_solution[key] = numeric_value
+                self.solution_step3 = numeric_solution
+                print(f"Перетворені розв'язки: {self.solution_step3}")
+            except (ValueError, TypeError, sp.SympifyError) as e:
+                print(f"Помилка: Не вдалося перетворити розв'язки в числові значення: {e}")
+                return
             
             QTimer.singleShot(0, self._initialize_step4)
 

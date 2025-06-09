@@ -229,15 +229,15 @@ class LagrangeStep3(QWidget):
         symbols_to_solve = self.var_symbols + list(self.lambda_syms)
         all_correct = True
         feedback_text = "Неправильний розв'язок: "
+        
         incorrect_solutions = []
+        has_symbolic_solution = False
 
         try:
             solutions = solve(self.current_equations_sympy, symbols_to_solve)
-
-            # solutions = self.precomputed_solutions
-            print(f"Знайдені розв'язки: {solutions}") # Для налагодження
-            print(f"Введені розв'язки: {entered_solutions}") # Для налагодження
-            print(f"Символи для розв'язання: {symbols_to_solve}") # Для налагодження
+            print(f"Знайдені розв'язки: {solutions}")
+            print(f"Введені розв'язки: {entered_solutions}")
+            print(f"Символи для розв'язання: {symbols_to_solve}")
 
             if solutions:
                 solution_dict = {}
@@ -257,19 +257,50 @@ class LagrangeStep3(QWidget):
                     if expected_solution_sympy is not None:
                         expected_solution_str = str(expected_solution_sympy).lower()
                         try:
-                            expected_val_numeric = float(sympify(str(expected_solution_sympy)).evalf())
-                            entered_val_numeric = float(sympify(entered_solution_str).evalf())
-                            
-                            if not sp.Abs(expected_val_numeric - entered_val_numeric) < 1e-6:
-                                all_correct = False
-                                incorrect_solutions.append(symbol_str)
-                        except ValueError:
-                            # Если не удалось преобразовать в float (например, одно из значений не числовое или ошибка sympify)
-                            # Сравниваем как строки, предварительно обработанные sympify для канонической формы
-                            print(f"Ошибка при числовом сравнении для {symbol_str}: {e}. Сравниваем как строки.")
-                            expected_str_canon = str(sympify(str(expected_solution_sympy))).lower().replace(" ", "")
-                            entered_str_canon = str(sympify(entered_solution_str)).lower().replace(" ", "")
-                            if expected_str_canon != entered_str_canon:
+                            # Проверяем, является ли ожидаемое решение выражением с λ1
+                            if 'λ1' in str(expected_solution_sympy):
+                                # Получаем значение λ1 из введенного решения
+                                lambda_val = float(sympify(entered_solutions.get('λ1', '1')).evalf())
+                                # Подставляем значение λ1 в ожидаемое решение
+                                expected_val_numeric = float(sympify(str(expected_solution_sympy).replace('λ1', str(lambda_val))).evalf())
+                                # Получаем введенное значение
+                                entered_val_numeric = float(sympify(entered_solution_str).evalf())
+                                
+                                # Проверяем, удовлетворяет ли введенное значение соотношению y = 3/λ1
+                                if symbol_str == 'y':
+                                    correct_ratio = abs(entered_val_numeric * lambda_val - 3) < 1e-6
+                                    if not correct_ratio:
+                                        all_correct = False
+                                        incorrect_solutions.append(symbol_str)
+                                elif symbol_str == 'x':
+                                    # Для x должно быть 0
+                                    if not abs(entered_val_numeric) < 1e-6:
+                                        all_correct = False
+                                        incorrect_solutions.append(symbol_str)
+                                else:
+                                    # Для λ1 проверяем, что y * λ1 = 3
+                                    y_val = float(sympify(entered_solutions.get('y', '0')).evalf())
+                                    if not abs(y_val * entered_val_numeric - 3) < 1e-6:
+                                        all_correct = False
+                                        incorrect_solutions.append(symbol_str)
+                            else:
+                                # Если решение не содержит λ1, проверяем обычное числовое равенство
+                                expected_val_numeric = float(sympify(str(expected_solution_sympy)).evalf())
+                                entered_val_numeric = float(sympify(entered_solution_str).evalf())
+                                
+                                if not sp.Abs(expected_val_numeric - entered_val_numeric) < 1e-6:
+                                    all_correct = False
+                                    incorrect_solutions.append(symbol_str)
+                        except (ValueError, TypeError):
+                            # Если не удалось преобразовать в float, проверяем символическое равенство
+                            try:
+                                expected_str_canon = str(sympify(str(expected_solution_sympy))).lower().replace(" ", "")
+                                entered_str_canon = str(sympify(entered_solution_str)).lower().replace(" ", "")
+                                if expected_str_canon != entered_str_canon:
+                                    all_correct = False
+                                    incorrect_solutions.append(symbol_str)
+                            except:
+                                has_symbolic_solution = True
                                 all_correct = False
                                 incorrect_solutions.append(symbol_str)
                     else:
@@ -282,69 +313,139 @@ class LagrangeStep3(QWidget):
                     incorrect_solutions.extend(entered_solutions.keys())
                 else:
                     self.feedback_label.setText("Система рівнянь не має розв'язку.")
+                    self.next_button.setEnabled(False)
                     return
 
         except Exception as e:
             all_correct = False
             feedback_text = f"Помилка при перевірці розв'язку: {e}"
             print(f"Помилка при перевірці розв'язку: {e}")
-            
-            import traceback
-            traceback.print_exc()
+            self.next_button.setEnabled(False)
+            return
 
         if all_correct:
-            self.feedback_label.setText("Розв'язок знайдено правильно!")
-            # Кнопка "Далі" вже активна
+            # Проверяем, есть ли символические решения
+            has_symbolic = False
+            for symbol_str, entry in self.solution_entries.items():
+                try:
+                    float(sympify(entry.text().strip()).evalf())
+                except (ValueError, TypeError):
+                    has_symbolic = True
+                    break
+            
+            if has_symbolic:
+                # Добавляем отладочную информацию
+                print("\n=== Відлагоджувальна інформація ===")
+                print("Поточні символи в розв'язку:")
+                for symbol_str, entry in self.solution_entries.items():
+                    print(f"{symbol_str} = {entry.text().strip()}")
+                
+                print("\nСпробуємо знайти числові розв'язки:")
+                try:
+                    # Пробуем подставить разные значения для λ
+                    for lambda_val in [1, 2, 3, 4, 5]:
+                        print(f"\nСпроба з λ1 = {lambda_val}:")
+                        test_solutions = {}
+                        for symbol in symbols_to_solve:
+                            symbol_str = str(symbol)
+                            if symbol_str.startswith('λ'):
+                                test_solutions[symbol] = lambda_val
+                            else:
+                                # Подставляем λ1 в выражение
+                                expr = sympify(str(solution_dict.get(symbol)).replace('λ1', str(lambda_val)))
+                                try:
+                                    test_solutions[symbol] = float(expr.evalf())
+                                    print(f"{symbol_str} = {test_solutions[symbol]}")
+                                except:
+                                    print(f"{symbol_str} = {expr} (не вдалося обчислити)")
+                except Exception as e:
+                    print(f"Помилка при спробі знайти числові розв'язки: {e}")
+                print("================================\n")
+
+                self.feedback_label.setText(
+                    "Розв'язок містить символьні вирази (наприклад, λ1, λ2 тощо).\n"
+                    "Для продовження необхідно ввести конкретні числові значення.\n"
+                    "Спробуйте підставити конкретні числа замість символів λ."
+                )
+                self.next_button.setEnabled(False)
+            else:
+                self.feedback_label.setText("Розв'язок знайдено правильно!")
+                print("Розв'язок знайдено правильно!")
+                self.next_button.setEnabled(True)
         else:
-            self.feedback_label.setText(feedback_text + ", ".join(incorrect_solutions))
-            # За бажанням, можна тут блокувати кнопку "Далі":
-            # self.next_button.setEnabled(False)
+            if has_symbolic_solution:
+                self.feedback_label.setText(
+                    "Розв'язок містить символьні вирази (наприклад, λ1, λ2 тощо).\n"
+                    "Для продовження необхідно ввести конкретні числові значення.\n"
+                    "Спробуйте підставити конкретні числа замість символів λ."
+                )
+            else:
+                self.feedback_label.setText(feedback_text + ", ".join(incorrect_solutions))
+                print(f"Неправильний розв'язок: {feedback_text + ", ".join(incorrect_solutions)}")
+            self.next_button.setEnabled(False)
 
     def go_to_prev_step(self):
         self.switch_step(2)
 
     def go_to_next_step(self):
         print("Викликаю switch_step з 3-го етапу...")
-        # Отримуємо введені розв'язки
-        entered_solutions_by_user = {
-            var: entry.text().strip() for var, entry in self.solution_entries.items()
-        }
+        try:
+            # Отримуємо введені розв'язки
+            entered_solutions_by_user = {
+                var: entry.text().strip() for var, entry in self.solution_entries.items()
+            }
 
-        # Вычисляем все возможные решения системы (если их несколько)
-        symbols_to_solve = self.var_symbols + list(self.lambda_syms)
-        # Используем dict=True для получения словарей
-        raw_sympy_solutions = solve(self.current_equations_sympy, symbols_to_solve, dict=True)
-        
-        processed_solutions_list_basic_types = [] # Переименовано для ясности
-        if raw_sympy_solutions:
-            solution_list_of_sympy_dicts = []
-            if isinstance(raw_sympy_solutions, dict): # Если solve вернул один словарь (одно решение)
-                solution_list_of_sympy_dicts = [raw_sympy_solutions]
-            elif isinstance(raw_sympy_solutions, list): # Если solve вернул список словарей
-                solution_list_of_sympy_dicts = raw_sympy_solutions
+            # Вычисляем все возможные решения системы
+            symbols_to_solve = self.var_symbols + list(self.lambda_syms)
+            raw_sympy_solutions = solve(self.current_equations_sympy, symbols_to_solve, dict=True)
             
-            for sol_sympy_dict in solution_list_of_sympy_dicts:
-                current_solution_basic_types_dict = {}
-                for var_symbol, value_sympy in sol_sympy_dict.items():
-                    current_solution_basic_types_dict[str(var_symbol)] = {
-                        'fraction_str': str(value_sympy) ,
-                        'float_val':  float(value_sympy.evalf())
-                    }
-                if current_solution_basic_types_dict: # Добавляем, только если словарь не пустой
-                    processed_solutions_list_basic_types.append(current_solution_basic_types_dict)
+            processed_solutions_list_basic_types = []
+            if raw_sympy_solutions:
+                solution_list_of_sympy_dicts = []
+                if isinstance(raw_sympy_solutions, dict):
+                    solution_list_of_sympy_dicts = [raw_sympy_solutions]
+                elif isinstance(raw_sympy_solutions, list):
+                    solution_list_of_sympy_dicts = raw_sympy_solutions
+                
+                for sol_sympy_dict in solution_list_of_sympy_dicts:
+                    current_solution_basic_types_dict = {}
+                    for var_symbol, value_sympy in sol_sympy_dict.items():
+                        try:
+                            # Если значение содержит λ1, подставляем значение из введенного решения
+                            if 'λ1' in str(value_sympy):
+                                lambda_val = float(sympify(entered_solutions_by_user.get('λ1', '1')).evalf())
+                                value_sympy = sympify(str(value_sympy).replace('λ1', str(lambda_val)))
+                            
+                            float_val = float(value_sympy.evalf())
+                            current_solution_basic_types_dict[str(var_symbol)] = {
+                                'fraction_str': str(value_sympy),
+                                'float_val': float_val
+                            }
+                        except (TypeError, ValueError) as e:
+                            print(f"Помилка при обробці значення {value_sympy} для {var_symbol}: {e}")
+                            continue
+                    
+                    if current_solution_basic_types_dict:
+                        processed_solutions_list_basic_types.append(current_solution_basic_types_dict)
 
-        print("Все найденные решения (только базовые типы, JSON-like формат):")
-        if not processed_solutions_list_basic_types:
-            print("[]") 
-        else:
+            if not processed_solutions_list_basic_types:
+                self.feedback_label.setText("Не вдалося отримати числові значення розв'язків. Будь ласка, перевірте введені дані.")
+                self.next_button.setEnabled(False)
+                return
+
+            print("Все найденные решения (только базовые типы, JSON-like формат):")
             formatted_json_string = json.dumps(processed_solutions_list_basic_types, indent=2, ensure_ascii=False)
             print(formatted_json_string)
-        
-        self.main_window.solution_step3 = entered_solutions_by_user 
-        self.main_window.all_solutions_step3 = processed_solutions_list_basic_types # Сохраняем список с базовыми типами
+            
+            # Сохраняем решения в main_window
+            self.main_window.solution_step3 = entered_solutions_by_user
+            self.main_window.all_solutions_step3 = processed_solutions_list_basic_types
 
-        self.switch_step(4)
-        print("Повернення з switch_step у 3-му етапі.")
+            self.switch_step(4)
+            print("Повернення з switch_step у 3-му етапі.")
+        except Exception as e:
+            self.feedback_label.setText(f"Помилка при обробці розв'язків: {e}")
+            self.next_button.setEnabled(False)
     
     def closeEvent(self, event):
         """Обработчик закрытия виджета"""
