@@ -40,6 +40,7 @@ class LagrangeStep2(QWidget):
 
         navigation_layout = QHBoxLayout()
         self.prev_button = QPushButton("Назад")
+        self.prev_button.setFixedHeight(50)
         self.prev_button.clicked.connect(self.go_to_prev_step)
         navigation_layout.addWidget(self.prev_button)
 

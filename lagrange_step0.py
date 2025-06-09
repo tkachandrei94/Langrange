@@ -36,6 +36,19 @@ class LagrangeStep0(QWidget):
         layout.addLayout(constraints_layout)
 
         self.next_button = QPushButton("Далі")
+        self.next_button.setFixedHeight(50)
+        self.next_button.setStyleSheet("""
+            QPushButton {
+                border: 2px solid #333;
+                border-radius: 10px;
+                background-color: #f0f0f0;
+                color: black;
+                font-size: 16px;
+                font-weight: bold;
+                padding: 10px;
+            }
+        """)
+
         self.next_button.clicked.connect(self.go_to_next_step)
         layout.addWidget(self.next_button)
 

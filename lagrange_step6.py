@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QComboBox, QHBoxLayout, QLineEdit, QButtonGroup, \
-    QRadioButton, QSpacerItem, QSizePolicy # Додано QSpacerItem, QSizePolicy
+    QRadioButton, QSpacerItem, QSizePolicy, QFrame
 from PyQt6.QtCore import Qt
 import sympy as sp
 import json
@@ -136,22 +136,56 @@ class LagrangeStep6(QWidget):
 
         self.function_value_feedback_label = QLabel("")
         main_layout.addWidget(self.function_value_feedback_label)
-        main_layout.addSpacing(15)
 
         self.check_function_value_button = QPushButton("Перевірити значення та тип екстремуму")
         self.check_function_value_button.clicked.connect(self.check_all_values)
         main_layout.addWidget(self.check_function_value_button, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        self.conclusion_instruction_label = QLabel("<b>Зробіть висновок:</b><br>"
-                                                   "На основі значення визначника ((Δ &lt; 0)) та ваших знань, визначте, чи є знайдена точка локальним мінімумом, максимумом чи сідловою точкою.<br>"
-                                                   "<ul>"
-                                                   "<li>Якщо (Δ &lt; 0) > 0 і $L_{xx} > 0$ (або $F_{xx} > 0$), то це локальний мінімум.</li>"
-                                                   "<li>Якщо (Δ &lt; 0) > 0 і $L_{xx} < 0$ (або $F_{xx} < 0$), то це локальний максимум.</li>"
-                                                   "<li>Якщо (Δ &lt; 0) < 0, то це сідлова точка.</li>"
-                                                   "<li>Якщо (Δ &lt; 0) = 0, потрібен додатковий аналіз.</li>"
-                                                   "</ul>"
-                                                   "*(Примітка: $L_{xx}$ - це друга часткова похідна функції Лагранжа за змінною x, або $F_{xx}$ для цільової функції, якщо обмежень немає і ви працюєте з нею напряму.)*")
-        main_layout.addWidget(self.conclusion_instruction_label)
+        # Create conclusion container
+        conclusion_container = QFrame()
+        conclusion_container.setFrameStyle(QFrame.Shape.StyledPanel)
+        conclusion_container.setStyleSheet("""
+            QFrame {
+                background-color: #f5f5f5;
+                border: 2px solid #cccccc;
+                border-radius: 8px;
+                padding: 10px;
+            }
+        """)
+        
+        conclusion_layout = QVBoxLayout(conclusion_container)
+        conclusion_layout.setContentsMargins(15, 15, 15, 15)
+        
+        # Add title
+        conclusion_title = QLabel("Зробіть висновок")
+        conclusion_title.setStyleSheet("""
+            QLabel {
+                font-size: 16px;
+                font-weight: bold;
+                color: #333333;
+            }
+        """)
+        conclusion_layout.addWidget(conclusion_title)
+        
+        # Add instruction label
+        self.conclusion_instruction_label = QLabel(
+            "На основі значення визначника ((Δ &lt; 0)) та ваших знань, визначте, чи є знайдена точка локальним мінімумом, максимумом чи сідловою точкою.<br>"
+            "<ul>"
+            "<li>Якщо (Δ &lt; 0) > 0 і $L_{xx} > 0$ (або $F_{xx} > 0$), то це локальний мінімум.</li>"
+            "<li>Якщо (Δ &lt; 0) > 0 і $L_{xx} < 0$ (або $F_{xx} < 0$), то це локальний максимум.</li>"
+            "<li>Якщо (Δ &lt; 0) < 0, то це сідлова точка.</li>"
+            "<li>Якщо (Δ &lt; 0) = 0, потрібен додатковий аналіз.</li>"
+            "</ul>"
+            "*(Примітка: $L_{xx}$ - це друга часткова похідна функції Лагранжа за змінною x, або $F_{xx}$ для цільової функції, якщо обмежень немає і ви працюєте з нею напряму.)*")
+        self.conclusion_instruction_label.setStyleSheet("""
+            QLabel {
+                color: #444444;
+                line-height: 1.5;
+            }
+        """)
+        conclusion_layout.addWidget(self.conclusion_instruction_label)
+        
+        main_layout.addWidget(conclusion_container)
         main_layout.addSpacing(20)
 
         navigation_layout = QHBoxLayout()
@@ -379,38 +413,41 @@ class LagrangeStep6(QWidget):
 
         user_choice_id = self.extremum_type_group.checkedId()
 
-        correct_extremum_id = None
         try:
             det = float(self.determinant_value)
-            if det > 0:
-                pass
-            elif det < 0:
-                correct_extremum_id = 3
-            else:
-                correct_extremum_id = 0
+            if det < 0:
+                correct_extremum_id = 1  # max
+            elif det > 0:
+                correct_extremum_id = 2  # min
+            else:  # det == 0
+                correct_extremum_id = 3  # saddle point
         except (ValueError, TypeError):
             correct_extremum_id = 0
 
         if correct_extremum_id == 0:
             self.extremum_feedback_label.setText(
                 "<span style='color: orange;'>Неможливо визначити тип екстремуму за значенням визначника ((Δ &lt; 0) = 0 або невідомий). Потрібен додатковий аналіз.</span>")
-        elif correct_extremum_id == 3:
-            if user_choice_id == 3:
-                self.extremum_feedback_label.setText(
-                    "<div style='color: green;'>Вірно! Це сідлова точка (Δ &lt; 0) < 0). </div>")
-            else:
-                self.extremum_feedback_label.setText(
-                    "<span style='color: red;'>Неправильно. При (Δ &lt; 0) < 0 це завжди сідлова точка.</span>")
-        elif det > 0:
+        elif correct_extremum_id == 1:  # max
             if user_choice_id == 1:
                 self.extremum_feedback_label.setText(
-                    "<span style='color: orange;'>Можливо вірно. Для точного визначення локального максимуму потрібно перевірити $L_{xx} < 0$.</span>")
-            elif user_choice_id == 2:
-                self.extremum_feedback_label.setText(
-                    "<span style='color: orange;'>Можливо вірно. Для точного визначення локального мінімуму потрібно перевірити $L_{xx} > 0$.</span>")
+                    "<div style='color: green;'>Вірно! Це локальний максимум (Δ &lt; 0) < 0).</div>")
             else:
                 self.extremum_feedback_label.setText(
-                    "<span style='color: red;'>Неправильно. При (Δ &lt; 0) > 0 це завжди локальний екстремум (min або max), а не сідлова точка.</span>")
+                    "<span style='color: red;'>Неправильно. При (Δ &lt; 0) < 0 це локальний максимум.</span>")
+        elif correct_extremum_id == 2:  # min
+            if user_choice_id == 2:
+                self.extremum_feedback_label.setText(
+                    "<div style='color: green;'>Вірно! Це локальний мінімум (Δ &lt; 0) > 0).</div>")
+            else:
+                self.extremum_feedback_label.setText(
+                    "<span style='color: red;'>Неправильно. При (Δ &lt; 0) > 0 це локальний мінімум.</span>")
+        else:  # saddle point
+            if user_choice_id == 3:
+                self.extremum_feedback_label.setText(
+                    "<div style='color: green;'>Вірно! Це сідлова точка (Δ &lt; 0) = 0).</div>")
+            else:
+                self.extremum_feedback_label.setText(
+                    "<span style='color: red;'>Неправильно. При (Δ &lt; 0) = 0 це сідлова точка.</span>")
 
     def _check_function_value_internal(self):
         user_substituted_values = {}
