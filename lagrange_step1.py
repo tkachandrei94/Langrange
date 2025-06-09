@@ -71,7 +71,6 @@ class LagrangeStep1(QWidget):
             entry.setValidator(validator)
 
     def get_constraint_texts(self):
-        print("constraint_entries:", self.constraint_entries)
         return [entry.text() for entry in self.constraint_entries]
 
     def _go_to_next_step(self): # Внутрішній метод для обробки натискання "Далі"

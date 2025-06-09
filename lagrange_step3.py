@@ -287,6 +287,8 @@ class LagrangeStep3(QWidget):
         except Exception as e:
             all_correct = False
             feedback_text = f"Помилка при перевірці розв'язку: {e}"
+            print(f"Помилка при перевірці розв'язку: {e}")
+            
             import traceback
             traceback.print_exc()
 

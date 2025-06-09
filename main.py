@@ -4,7 +4,6 @@ from PyQt6.QtCore import Qt, QTimer
 import sympy as sp
 from sympy import symbols, sympify, diff
 import signal
-import os
 
 
 
