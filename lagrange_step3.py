@@ -250,11 +250,7 @@ class LagrangeStep3(QWidget):
             entered_solutions[symbol_str] = entry.text().strip()
 
         symbols_to_solve = self.var_symbols + list(self.lambda_syms)
-        all_correct = True
-        feedback_text = "Неправильний розв'язок: "
-        
-        incorrect_solutions = []
-        has_symbolic_solution = False
+        all_correct = False
 
         try:
             solutions = solve(self.current_equations_sympy, symbols_to_solve)
@@ -263,78 +259,40 @@ class LagrangeStep3(QWidget):
             print(f"Символи для розв'язання: {symbols_to_solve}")
 
             if solutions:
-                solution_dict = {}
+                solution_dicts = []
                 if isinstance(solutions, dict):
-                    solution_dict = solutions
-                elif isinstance(solutions, list) and solutions:
-                    if isinstance(solutions[0], dict):
-                        solution_dict = solutions[0]
-                    elif len(solutions[0]) == len(symbols_to_solve):
-                        solution_dict = dict(zip(symbols_to_solve, solutions[0]))
-
-                for symbol in symbols_to_solve:
-                    symbol_str = str(symbol)
-                    expected_solution_sympy = solution_dict.get(symbol)
-                    entered_solution_str = entered_solutions.get(symbol_str, "").strip().lower()
-
-                    if expected_solution_sympy is not None:
-                        expected_solution_str = str(expected_solution_sympy).lower()
-                        try:
-                            # Проверяем, является ли ожидаемое решение выражением с λ1
-                            if 'λ1' in str(expected_solution_sympy):
-                                # Получаем значение λ1 из введенного решения
-                                lambda_val = float(sympify(entered_solutions.get('λ1', '1')).evalf())
-                                # Подставляем значение λ1 в ожидаемое решение
-                                expected_val_numeric = float(sympify(str(expected_solution_sympy).replace('λ1', str(lambda_val))).evalf())
-                                # Получаем введенное значение
-                                entered_val_numeric = float(sympify(entered_solution_str).evalf())
-                                
-                                # Проверяем, удовлетворяет ли введенное значение соотношению y = 3/λ1
-                                if symbol_str == 'y':
-                                    correct_ratio = abs(entered_val_numeric * lambda_val - 3) < 1e-6
-                                    if not correct_ratio:
-                                        all_correct = False
-                                        incorrect_solutions.append(symbol_str)
-                                elif symbol_str == 'x':
-                                    # Для x должно быть 0
-                                    if not abs(entered_val_numeric) < 1e-6:
-                                        all_correct = False
-                                        incorrect_solutions.append(symbol_str)
-                                else:
-                                    # Для λ1 проверяем, что y * λ1 = 3
-                                    y_val = float(sympify(entered_solutions.get('y', '0')).evalf())
-                                    if not abs(y_val * entered_val_numeric - 3) < 1e-6:
-                                        all_correct = False
-                                        incorrect_solutions.append(symbol_str)
-                            else:
-                                # Если решение не содержит λ1, проверяем обычное числовое равенство
-                                expected_val_numeric = float(sympify(str(expected_solution_sympy)).evalf())
-                                entered_val_numeric = float(sympify(entered_solution_str).evalf())
-                                
-                                if not sp.Abs(expected_val_numeric - entered_val_numeric) < 1e-6:
-                                    all_correct = False
-                                    incorrect_solutions.append(symbol_str)
-                        except (ValueError, TypeError):
-                            # Если не удалось преобразовать в float, проверяем символическое равенство
-                            try:
-                                expected_str_canon = str(sympify(str(expected_solution_sympy))).lower().replace(" ", "")
-                                entered_str_canon = str(sympify(entered_solution_str)).lower().replace(" ", "")
-                                if expected_str_canon != entered_str_canon:
-                                    all_correct = False
-                                    incorrect_solutions.append(symbol_str)
-                            except:
-                                has_symbolic_solution = True
-                                all_correct = False
-                                incorrect_solutions.append(symbol_str)
+                    solution_dicts = [solutions]
+                elif isinstance(solutions, list):
+                    if all(isinstance(sol, dict) for sol in solutions):
+                        solution_dicts = solutions
                     else:
-                        all_correct = False
-                        incorrect_solutions.append(symbol_str)
+                        # Если решения в виде кортежей
+                        for sol in solutions:
+                            if len(sol) == len(symbols_to_solve):
+                                solution_dicts.append(dict(zip(symbols_to_solve, sol)))
+
+                for solution_dict in solution_dicts:
+                    match = True
+                    for symbol in symbols_to_solve:
+                        symbol_str = str(symbol)
+                        expected_solution_sympy = solution_dict.get(symbol)
+                        entered_solution_str = entered_solutions.get(symbol_str, "").strip().lower()
+                        if expected_solution_sympy is not None:
+                            expected_val_numeric = float(sympify(str(expected_solution_sympy)).evalf())
+                            entered_val_numeric = float(sympify(entered_solution_str).evalf())
+                            if not sp.Abs(expected_val_numeric - entered_val_numeric) < 1e-6:
+                                match = False
+                                break
+                        else:
+                            match = False
+                            break
+                    if match:
+                        all_correct = True
+                        break
 
             else:
                 if entered_solutions:
                     all_correct = False
-                    incorrect_solutions.extend(entered_solutions.keys())
-                else:
                     self.feedback_label.setText("Система рівнянь не має розв'язку.")
                     self.next_button.setEnabled(False)
                     self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
@@ -342,8 +300,7 @@ class LagrangeStep3(QWidget):
 
         except Exception as e:
             all_correct = False
-            feedback_text = f"Помилка при перевірці розв'язку: {e}"
-            print(f"Помилка при перевірці розв'язку: {e}")
+            self.feedback_label.setText(f"Помилка при перевірці розв'язку: {e}")
             self.next_button.setEnabled(False)
             self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
             return
@@ -400,17 +357,7 @@ class LagrangeStep3(QWidget):
                 self.next_button.setEnabled(True)
                 self.next_button.setStyleSheet(ACTIVE_NEXT_BUTTON_STYLE)
         else:
-            if has_symbolic_solution:
-                self.feedback_label.setText(
-                    "Розв'язок містить символьні вирази (наприклад, λ1, λ2 тощо).\n"
-                    "Для продовження необхідно ввести конкретні числові значення.\n"
-                    "Спробуйте підставити конкретні числа замість символів λ."
-                )
-                self.next_button.setEnabled(False)
-                self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
-            else:
-                self.feedback_label.setText(feedback_text + ", ".join(incorrect_solutions))
-                print(f"Неправильний розв'язок: {feedback_text + ", ".join(incorrect_solutions)}")
+            self.feedback_label.setText("Неправильний розв'язок.")
             self.next_button.setEnabled(False)
             self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
 
