@@ -6,10 +6,13 @@ import io
 from PyQt6.QtGui import QPixmap, QImage
 from test_config import test_config_step3
 import json 
+from styles import MAIN_STYLE, STEP_TITLE_STYLE, INACTIVE_NEXT_BUTTON_STYLE, ACTIVE_NEXT_BUTTON_STYLE, CONCLUSION_CONTAINER_STYLE, CONCLUSION_TITLE_STYLE, FEEDBACK_STYLE, NAVIGATION_BUTTON_STYLE
 
 class LagrangeStep3(QWidget):
     def __init__(self, parent, switch_step_callback):
         super().__init__(parent)
+        self.setStyleSheet(MAIN_STYLE)
+
         self.switch_step = switch_step_callback
         self.initial_derivatives = []
         self.current_equations_sympy = [] # Зберігаємо рівняння як sympy об'єкти Eq
@@ -25,6 +28,8 @@ class LagrangeStep3(QWidget):
 
         instruction_label = QLabel("<b>Етап 3: Розв'язання системи рівнянь</b><br>"
                                    "Виберіть рівняння, виразіть змінну та підставте в інше рівняння.")
+        instruction_label.setStyleSheet(STEP_TITLE_STYLE)
+
         layout.addWidget(instruction_label)
 
         self.equations_grid = QGridLayout()
@@ -34,36 +39,44 @@ class LagrangeStep3(QWidget):
         self.express_equation_combo = QComboBox()
         expression_layout.addWidget(QLabel("З рівняння: "))
         expression_layout.addWidget(self.express_equation_combo)
+
         self.express_variable_combo = QComboBox()
         expression_layout.addWidget(QLabel("виразіть: "))
         expression_layout.addWidget(self.express_variable_combo)
+
         self.substitution_target_combo = QComboBox()
         expression_layout.addWidget(QLabel("та підставте в рівняння: "))
         expression_layout.addWidget(self.substitution_target_combo)
+
         self.substitute_button = QPushButton("Підставити")
         self.substitute_button.clicked.connect(self.perform_substitution)
         expression_layout.addWidget(self.substitute_button)
         layout.addLayout(expression_layout)
 
         solution_label = QLabel("Введіть розв'язки:")
+        solution_label.setStyleSheet(STEP_TITLE_STYLE)
         layout.addWidget(solution_label)
         self.solutions_grid_layout = QGridLayout()
         layout.addLayout(self.solutions_grid_layout)
 
         check_button = QPushButton("Перевірити розв'язок")
         check_button.clicked.connect(self.check_solution)
+        check_button.setStyleSheet(NAVIGATION_BUTTON_STYLE)
         layout.addWidget(check_button)
         self.check_button = check_button
 
         self.feedback_label = QLabel("")
+        self.feedback_label.setStyleSheet(STEP_TITLE_STYLE)
         layout.addWidget(self.feedback_label)
 
         navigation_layout = QHBoxLayout()
         prev_button = QPushButton("Назад")
         prev_button.clicked.connect(self.go_to_prev_step)
+        prev_button.setStyleSheet(NAVIGATION_BUTTON_STYLE)
         navigation_layout.addWidget(prev_button)
 
         next_button = QPushButton("Далі")
+        next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
         next_button.setEnabled(True) # Кнопка "Далі" активна за замовчуванням
         next_button.clicked.connect(self.go_to_next_step)
         navigation_layout.addWidget(next_button)
@@ -102,7 +115,7 @@ class LagrangeStep3(QWidget):
 
             try:
                 # Створюємо фігуру matplotlib без відображення
-                fig = plt.figure(figsize=(6, 1), dpi=100)
+                fig = plt.figure(figsize=(6, 1), dpi=75)
                 fig.text(0.05, 0.5, eq_latex, fontsize=12)
                 fig.tight_layout()
 
@@ -324,6 +337,7 @@ class LagrangeStep3(QWidget):
                 else:
                     self.feedback_label.setText("Система рівнянь не має розв'язку.")
                     self.next_button.setEnabled(False)
+                    self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
                     return
 
         except Exception as e:
@@ -331,6 +345,7 @@ class LagrangeStep3(QWidget):
             feedback_text = f"Помилка при перевірці розв'язку: {e}"
             print(f"Помилка при перевірці розв'язку: {e}")
             self.next_button.setEnabled(False)
+            self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
             return
 
         if all_correct:
@@ -378,10 +393,12 @@ class LagrangeStep3(QWidget):
                     "Спробуйте підставити конкретні числа замість символів λ."
                 )
                 self.next_button.setEnabled(False)
+                self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
             else:
                 self.feedback_label.setText("Розв'язок знайдено правильно!")
                 print("Розв'язок знайдено правильно!")
                 self.next_button.setEnabled(True)
+                self.next_button.setStyleSheet(ACTIVE_NEXT_BUTTON_STYLE)
         else:
             if has_symbolic_solution:
                 self.feedback_label.setText(
@@ -389,10 +406,13 @@ class LagrangeStep3(QWidget):
                     "Для продовження необхідно ввести конкретні числові значення.\n"
                     "Спробуйте підставити конкретні числа замість символів λ."
                 )
+                self.next_button.setEnabled(False)
+                self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
             else:
                 self.feedback_label.setText(feedback_text + ", ".join(incorrect_solutions))
                 print(f"Неправильний розв'язок: {feedback_text + ", ".join(incorrect_solutions)}")
             self.next_button.setEnabled(False)
+            self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
 
     def go_to_prev_step(self):
         self.switch_step(2)

@@ -57,31 +57,42 @@ MAIN_STYLE = """
     }
 
     QRadioButton {
-        spacing: 8px;
+        spacing: 18px;
     }
 
-    QRadioButton::indicator {
-        width: 18px;
-        height: 18px;
+    QComboBox {
+        font-size: 12px;
+        font-weight: bold;
+        color: #455A64;
+        background: #f0f0f0;
+        border: 1px solid #333;
+        border-radius: 5px;
+        padding: 4px 8px;
     }
-
-    QRadioButton::indicator:unchecked {
-        border: 2px solid #90A4AE;
-        border-radius: 9px;
-        background-color: white;
+    QComboBox QAbstractItemView {
+        font-size: 12px;
+        color: #455A64;
+        background: #ffffff;
+        selection-background-color: #a5f7b2;
     }
-
-    QRadioButton::indicator:checked {
-        border: 2px solid #78909C;
-        border-radius: 9px;
-        background-color: #78909C;
+    QComboBox QLabel {
+        font-size: 12px;
+        color: #455A64;
+        background: #ffffff;
+        selection-background-color: #a5f7b2;
+    }
+    QComboBox QLabel {
+        font-size: 12px;
+        color: #455A64;
+        background: #ffffff;
+        selection-background-color: #a5f7b2;
     }
 """
 
 # Специальные стили для конкретных элементов
 STEP_TITLE_STYLE = """
     QLabel {
-        font-size: 22px;
+        font-size: 20px;
         font-weight: bold;
         color: #455A64;
         padding: 10px 0;
@@ -108,7 +119,8 @@ CONCLUSION_TITLE_STYLE = """
 
 FEEDBACK_STYLE = """
     QLabel {
-        padding: 10px;
+        padding: 16px;
+        color: #455A64;
         border-radius: 4px;
     }
 """
@@ -124,24 +136,24 @@ NAVIGATION_BUTTON_STYLE = """
 INACTIVE_NEXT_BUTTON_STYLE = """
 QPushButton {
     border: 2px solid #333;
-    border-radius: 10px;
+    border-radius: 4px;
     background-color: #e0e0e0;
     color: #888;
     font-size: 16px;
     font-weight: bold;
-    padding: 10px;
+    padding: 6px;
 }
 """
 
 ACTIVE_NEXT_BUTTON_STYLE = """
 QPushButton {
     border: 2px solid #333;
-    border-radius: 10px;
+    border-radius: 4px;
     background-color: #a5f7b2;  /* светло-зеленый */
     color: black;
     font-size: 16px;
     font-weight: bold;
-    padding: 10px;
+    padding: 6px;
 }
 QPushButton:hover {
     background-color: #7be495;

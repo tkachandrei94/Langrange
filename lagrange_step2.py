@@ -4,11 +4,13 @@ from PyQt6.QtCore import Qt
 import sympy as sp
 from test_config import test_config_step2
 from styles import MAIN_STYLE, STEP_TITLE_STYLE, INACTIVE_NEXT_BUTTON_STYLE, ACTIVE_NEXT_BUTTON_STYLE, CONCLUSION_CONTAINER_STYLE, CONCLUSION_TITLE_STYLE, FEEDBACK_STYLE, NAVIGATION_BUTTON_STYLE
+from symbol_button_panel import SymbolButtonPanel
 
 class LagrangeStep2(QWidget):
     def __init__(self, parent, switch_step_callback):
         super().__init__(parent)
         self.setStyleSheet(MAIN_STYLE)
+
         self.note_label = None
         self.switch_step = switch_step_callback
         self.function_str = ""
@@ -41,18 +43,16 @@ class LagrangeStep2(QWidget):
         layout.addWidget(self.check_button)
 
         self.feedback_label = QLabel("")
-        self.feedback_label.setStyleSheet(FEEDBACK_STYLE)
+        self.feedback_label.setStyleSheet(STEP_TITLE_STYLE)
         layout.addWidget(self.feedback_label)
 
         navigation_layout = QHBoxLayout()
         self.prev_button = QPushButton("Назад")
-        self.prev_button.setFixedHeight(50)
         self.prev_button.clicked.connect(self.go_to_prev_step)
         self.prev_button.setStyleSheet(NAVIGATION_BUTTON_STYLE)
         navigation_layout.addWidget(self.prev_button)
 
         self.next_button = QPushButton("Далі")
-        self.next_button.setFixedHeight(50)
         self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
         self.next_button.setEnabled(False)
         self.next_button.clicked.connect(self.go_to_next_step)
@@ -114,6 +114,8 @@ class LagrangeStep2(QWidget):
         row = 0
         print("var_symbols:", var_symbols)
         print("lambda_syms:", lambda_syms)
+
+        symbols = ['λ', '+', '-', '*', '/']
         for var in var_symbols:
             label = QLabel(f"dL/d{var} = ")
             label.setStyleSheet(STEP_TITLE_STYLE)
@@ -121,8 +123,12 @@ class LagrangeStep2(QWidget):
             entry = QLineEdit()
             entry.setStyleSheet(STEP_TITLE_STYLE)
             entry.setText(test_config_step2[row] if test_config_step2 else "")
+
+            symbol_panel = SymbolButtonPanel(symbols, entry)
+            
             self.derivatives_grid_layout.addWidget(label, row, 0)
             self.derivatives_grid_layout.addWidget(entry, row, 1)
+            self.derivatives_grid_layout.addLayout(symbol_panel, row, 2)
             self.derivative_entries[str(var)] = entry
             row += 1
 
@@ -133,8 +139,11 @@ class LagrangeStep2(QWidget):
             entry = QLineEdit()
             entry.setStyleSheet(STEP_TITLE_STYLE)
             entry.setText(test_config_step2[row] if test_config_step2 else "")
+
+            symbol_panel = SymbolButtonPanel(symbols, entry)
             self.derivatives_grid_layout.addWidget(label, row, 0)
             self.derivatives_grid_layout.addWidget(entry, row, 1)
+            self.derivatives_grid_layout.addLayout(symbol_panel, row, 2)
             self.derivative_entries[str(lam)] = entry
             row += 1
 

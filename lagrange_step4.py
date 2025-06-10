@@ -4,11 +4,14 @@ import matplotlib.pyplot as plt
 import io
 from PyQt6.QtGui import QPixmap, QImage
 from test_config import test_config_step4
+from styles import MAIN_STYLE, STEP_TITLE_STYLE, INACTIVE_NEXT_BUTTON_STYLE, ACTIVE_NEXT_BUTTON_STYLE, CONCLUSION_CONTAINER_STYLE, CONCLUSION_TITLE_STYLE, FEEDBACK_STYLE, NAVIGATION_BUTTON_STYLE
 
 
 class LagrangeStep4(QWidget):
     def __init__(self, parent=None, switch_step_callback=None):
         super().__init__(parent)
+        self.setStyleSheet(MAIN_STYLE)
+
         self.switch_step = switch_step_callback
         self.variables = []
         self.first_derivatives_str = {}
@@ -16,12 +19,14 @@ class LagrangeStep4(QWidget):
         layout = QVBoxLayout()
 
         instruction_label = QLabel("<b>Етап 4: Введіть другі часткові похідні функції Лагранжа за змінними</b>")
+        instruction_label.setStyleSheet(STEP_TITLE_STYLE)
         layout.addWidget(instruction_label)
 
         self.first_derivatives_labels_layout = QVBoxLayout()
         layout.addLayout(self.first_derivatives_labels_layout)
 
         derivatives_input_label = QLabel("Введіть другі часткові похідні:")
+        derivatives_input_label.setStyleSheet(STEP_TITLE_STYLE)
         layout.addWidget(derivatives_input_label)
 
         self.derivatives_grid = QGridLayout()
@@ -29,19 +34,26 @@ class LagrangeStep4(QWidget):
 
         self.check_button = QPushButton("Перевірити")
         self.check_button.clicked.connect(self.check_second_derivatives)
+        self.check_button.setStyleSheet(NAVIGATION_BUTTON_STYLE)
         layout.addWidget(self.check_button)
 
         self.feedback_label = QLabel("")
+        self.feedback_label.setStyleSheet(STEP_TITLE_STYLE)
         layout.addWidget(self.feedback_label)
 
         navigation_layout = QHBoxLayout()
         prev_button = QPushButton("Назад")
         prev_button.clicked.connect(self.go_to_prev_step)
+        prev_button.setStyleSheet(NAVIGATION_BUTTON_STYLE)
         navigation_layout.addWidget(prev_button)
 
         next_button = QPushButton("Далі")
         next_button.clicked.connect(self.go_to_next_step)
+        next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
+        next_button.setEnabled(False)
         navigation_layout.addWidget(next_button)
+        self.next_button = next_button
+
 
         layout.addLayout(navigation_layout)
         self.setLayout(layout)
@@ -69,11 +81,12 @@ class LagrangeStep4(QWidget):
         if self.first_derivatives_str:
             first_derivatives_header = QLabel("<b>Перші часткові похідні (для довідки):</b>")
             self.first_derivatives_labels_layout.addWidget(first_derivatives_header)
+            first_derivatives_header.setStyleSheet(STEP_TITLE_STYLE)
             for var, derivative in self.first_derivatives_str.items():
                 derivative_latex = f"$\\frac{{\\partial L}}{{\\partial {var}}} = {sp.latex(sp.sympify(derivative))}$"
 
                 try:
-                    fig = plt.figure(figsize=(6, 1), dpi=100)
+                    fig = plt.figure(figsize=(3, 1), dpi=75)
                     fig.text(0.05, 0.5, derivative_latex, fontsize=12)
                     fig.tight_layout()
 
@@ -88,7 +101,8 @@ class LagrangeStep4(QWidget):
                     derivative_label = QLabel()
                     derivative_label.setPixmap(pixmap)
                     self.first_derivatives_labels_layout.addWidget(derivative_label)
-
+                    self.first_derivatives_labels_layout.addSpacing(-10)
+                    derivative_label.setStyleSheet(STEP_TITLE_STYLE)
                 except Exception as e:
                     derivative_label_fallback = QLabel(f"∂L/∂{var} = {derivative}")
                     self.first_derivatives_labels_layout.addWidget(derivative_label_fallback)
@@ -96,7 +110,8 @@ class LagrangeStep4(QWidget):
         else:
             no_derivatives_label = QLabel("Перші часткові похідні не знайдено.")
             self.first_derivatives_labels_layout.addWidget(no_derivatives_label)
-
+            no_derivatives_label.setStyleSheet(STEP_TITLE_STYLE)
+            
     def _setup_input_fields(self):
         # Очищаємо попередні поля
         for i in reversed(range(self.derivatives_grid.count())):
@@ -117,7 +132,7 @@ class LagrangeStep4(QWidget):
 
             for text_latex, (row, col), derivative_vars, index in labels_data:
                 try:
-                    fig = plt.figure(figsize=(3, 1), dpi=100)
+                    fig = plt.figure(figsize=(3, 1), dpi=75)
                     fig.text(0.05, 0.5, text_latex, fontsize=12)
                     fig.tight_layout()
 
@@ -135,7 +150,7 @@ class LagrangeStep4(QWidget):
 
                     entry = QLineEdit()
                     entry.setText(str(test_config_step4[index]) if test_config_step4 else "")
-
+                    entry.setStyleSheet(STEP_TITLE_STYLE)
                     self.derivatives_grid.addWidget(entry, row, col + 1)
                     self.second_derivative_entries[derivative_vars] = entry
 
@@ -146,7 +161,7 @@ class LagrangeStep4(QWidget):
                     self.derivatives_grid.addWidget(entry, row, col + 1)
                     self.second_derivative_entries[derivative_vars] = entry
                     print(f"Помилка рендерингу LaTeX (другі похідні): {e}")
-
+                    label_fallback.setStyleSheet(STEP_TITLE_STYLE)
     def get_second_derivatives_input(self):
         second_derivatives_input = {}
         for (var1, var2), entry in self.second_derivative_entries.items():
@@ -190,11 +205,14 @@ class LagrangeStep4(QWidget):
 
         if all_correct:
             self.feedback_label.setText("Другі похідні введено правильно!")
+            self.next_button.setEnabled(True)
+            self.next_button.setStyleSheet(ACTIVE_NEXT_BUTTON_STYLE)
             print("Другі похідні введено правильно!")
         else:
             self.feedback_label.setText(feedback_text + ", ".join(incorrect_derivatives))
             print(f"Другі похідні введено неправильно! {feedback_text + ', '.join(incorrect_derivatives)}")
-
+            self.next_button.setEnabled(False)
+            self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
     def go_to_prev_step(self):
         self.switch_step(3)
 

@@ -55,6 +55,7 @@ class LagrangeStep6(QWidget):
         z_extremum_function_layout.addWidget(self.z_label)
 
         self.extremum_type_group = QButtonGroup(self)
+
         self.max_radio = QRadioButton("max")
         self.min_radio = QRadioButton("min")
         self.saddle_radio = QRadioButton("сідлова точка")
@@ -71,7 +72,7 @@ class LagrangeStep6(QWidget):
         extremum_radio_layout.addWidget(self.min_radio)
         extremum_radio_layout.addWidget(self.saddle_radio)
         extremum_radio_layout.setContentsMargins(0, 0, 0, 0)
-        extremum_radio_layout.setSpacing(0)
+        extremum_radio_layout.setSpacing(10)
 
         z_with_options_layout = QVBoxLayout()
         z_with_options_layout.addWidget(self.z_label,
@@ -127,12 +128,9 @@ class LagrangeStep6(QWidget):
             QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))  # ВИПРАВЛЕНО ТУТ!
 
         main_layout.addLayout(substitution_full_layout)
-        main_layout.addSpacing(15)
-
         self.extremum_feedback_label = QLabel("")
         main_layout.addWidget(self.extremum_feedback_label)
         self.extremum_feedback_label.setWordWrap(True)
-        main_layout.addSpacing(5)
 
         self.function_value_feedback_label = QLabel("")
         main_layout.addWidget(self.function_value_feedback_label)
@@ -184,9 +182,9 @@ class LagrangeStep6(QWidget):
             }
         """)
         conclusion_layout.addWidget(self.conclusion_instruction_label)
+        main_layout.addStretch()
         
         main_layout.addWidget(conclusion_container)
-        main_layout.addSpacing(20)
 
         navigation_layout = QHBoxLayout()
         prev_button = QPushButton("Назад")
@@ -311,12 +309,11 @@ class LagrangeStep6(QWidget):
             point_coords = []
             # Використовуємо self.variables для гарантованого порядку та набору змінних для підстановки
             # Множники Лагранжа тут не потрібні для підстановки в цільову функцію
-            for var_name in sorted(self.variables): # self.variables - це ['x', 'y'], наприклад
-                print(f"  var_name: {var_name}")
+            first = True
+            for var_name in sorted(self.variables):
                 if var_name in current_solution_to_display:
                     val_data = current_solution_to_display[var_name]
                     rounded_val = round(float(val_data['float_val']), 3)
-                    point_coords.append(f"{var_name}={rounded_val}")      
 
                     var_entry = QLineEdit()
                     var_entry.setMinimumWidth(100)
@@ -324,8 +321,11 @@ class LagrangeStep6(QWidget):
                     var_entry.setText(str(val_data['float_val'])) 
 
                     self.variable_value_entries[var_name] = var_entry
-                    self.substitution_variables_inputs_layout.addWidget(QLabel(", "))
+
+                    if not first:
+                        self.substitution_variables_inputs_layout.addWidget(QLabel(", "))
                     self.substitution_variables_inputs_layout.addWidget(var_entry)
+                    first = False
 
             self.solution_point_label.setText(f"<b>Обране рішення:</b> A( {', '.join(point_coords)} )")
             self.final_function_value_entry.clear() # Очищаємо поле результату функції

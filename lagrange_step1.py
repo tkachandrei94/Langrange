@@ -6,6 +6,7 @@ from test_config import test_config_step1
 from styles import MAIN_STYLE, STEP_TITLE_STYLE, CONCLUSION_CONTAINER_STYLE, CONCLUSION_TITLE_STYLE, FEEDBACK_STYLE, NAVIGATION_BUTTON_STYLE
 from sympy import Symbol, sympify, SympifyError
 from PyQt6.QtWidgets import QMessageBox
+from symbol_button_panel import SymbolButtonPanel
 
 class LagrangeStep1(QWidget):
     def __init__(self, parent, switch_step_callback):
@@ -48,48 +49,6 @@ class LagrangeStep1(QWidget):
         self.layout.addWidget(self.next_button)
 
         self.setLayout(self.layout)
-
-    def create_symbol_button(self, symbol, target_entry):
-        button = QPushButton(symbol)
-        button.setFixedSize(30, 30)
-        button.setStyleSheet("""
-            QPushButton {
-                color: #000000;
-                border: 1px solid #333;
-                border-radius: 5px;
-                background-color: #f0f0f0;
-                font-size: 16px;
-                font-weight: bold;
-                padding: 2px;
-                margin: 1px;
-            }
-            QPushButton:hover {
-                background-color: #e0e0e0;
-                border: 1px solid #000;
-            }
-            QPushButton:pressed {
-                background-color: #d0d0d0;
-            }
-        """)
-        button.clicked.connect(lambda: self.insert_symbol(target_entry, symbol))
-        return button
-
-    def insert_symbol(self, entry, symbol):
-        current_text = entry.text()
-        cursor_pos = entry.cursorPosition()
-        new_text = current_text[:cursor_pos] + symbol + current_text[cursor_pos:]
-        entry.setText(new_text)
-        entry.setCursorPosition(cursor_pos + len(symbol))
-
-    def create_symbol_panel(self, target_entry):
-        panel = QHBoxLayout()
-        panel.addStretch()  # Добавляем stretch в начало, чтобы кнопки были справа
-        symbols = ['λ', '+', '-', '*', '/']
-        
-        for symbol in symbols:
-            button = self.create_symbol_button(symbol, target_entry)
-            panel.addWidget(button)
-        return panel
 
     def setup_input_fields(self, variables, num_constraints):
         self.variables = variables
@@ -135,8 +94,8 @@ class LagrangeStep1(QWidget):
             constraint_entry.setStyleSheet(STEP_TITLE_STYLE)
             constraint_entry.setText(test_config_step1[i + 1] if test_config_step1 else "")
             
-            # Создаем панель с символами
-            symbol_panel = self.create_symbol_panel(constraint_entry)
+            symbols = ['λ', '+', '-', '*', '/']
+            symbol_panel = SymbolButtonPanel(symbols, constraint_entry)
             row_container.addLayout(symbol_panel)
 
             input_layout.addWidget(constraint_label, 2)
@@ -150,8 +109,8 @@ class LagrangeStep1(QWidget):
             self.constraint_entries.append(constraint_entry)
 
         # Добавляем панель символов для целевой функции перед полем ввода
-        function_symbol_panel = self.create_symbol_panel(self.function_entry)
-        self.layout.insertLayout(1, function_symbol_panel)  # Вставляем перед полем ввода функции
+        symbol_panel = SymbolButtonPanel(symbols, self.function_entry)
+        self.layout.insertLayout(1, symbol_panel)  # Вставляем перед полем ввода функции
 
         # Регулярний вираз для дозволених символів
         allowed_chars = QRegularExpression(r"^[0-9" + "".join(self.variables) + r"λλ\+\-\*\/\^\.\,\s()\*]*$")

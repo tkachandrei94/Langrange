@@ -5,10 +5,13 @@ import io
 import numpy as np
 from sympy import symbols, sympify  # Додаємо імпорти для роботи з символьними виразами
 from test_config import test_config_step5
+from styles import MAIN_STYLE, STEP_TITLE_STYLE, INACTIVE_NEXT_BUTTON_STYLE, ACTIVE_NEXT_BUTTON_STYLE, CONCLUSION_CONTAINER_STYLE, CONCLUSION_TITLE_STYLE, FEEDBACK_STYLE, NAVIGATION_BUTTON_STYLE
 
 class LagrangeStep5(QWidget):
     def __init__(self, parent=None, switch_step_callback=None):
         super().__init__(parent)
+        self.setStyleSheet(MAIN_STYLE)
+
         self.switch_step = switch_step_callback
         self.calculated_second_derivatives = {}
         self.variables = []
@@ -18,10 +21,12 @@ class LagrangeStep5(QWidget):
 
         instruction_label = QLabel("<b>Етап 5: Аналіз матриці Гессе</b><br>"
                                    "Перегляньте матрицю Гессе та обчисліть її визначник.")
+        instruction_label.setStyleSheet(STEP_TITLE_STYLE)
         layout.addWidget(instruction_label)
 
         # Додаємо QLabel для виводу екстремальної точки
         self.extreme_point_label = QLabel("Знайдена екстремальна точка:")
+        self.extreme_point_label.setStyleSheet(STEP_TITLE_STYLE)
         layout.addWidget(self.extreme_point_label)
 
         self.hessian_matrix_display_layout = QVBoxLayout()  # Новий макет для відображення матриці
@@ -29,28 +34,33 @@ class LagrangeStep5(QWidget):
 
         # Ці елементи мають бути додані лише один раз у конструкторі
         determinant_label = QLabel("Визначник матриці Гессе (Δ = (∂²L/∂x²)(∂²L/∂y²) - (∂²L/∂x∂y)(∂²L/∂y∂x)):")
+        determinant_label.setStyleSheet(STEP_TITLE_STYLE)
         layout.addWidget(determinant_label)  # Додаємо до основного макету
 
         self.determinant_entry = QLineEdit()
         self.determinant_entry.setText(str(test_config_step5[0]) if test_config_step5 else "")
-        
+        self.determinant_entry.setStyleSheet(STEP_TITLE_STYLE)
         layout.addWidget(self.determinant_entry)  # Додаємо до основного макету
 
         check_button = QPushButton("Перевірити")
         check_button.clicked.connect(self.check_determinant)
+        check_button.setStyleSheet(NAVIGATION_BUTTON_STYLE)
         layout.addWidget(check_button)
 
         self.result_label = QLabel("")
+        self.result_label.setStyleSheet(STEP_TITLE_STYLE)
         layout.addWidget(self.result_label)
 
         navigation_layout = QHBoxLayout()
         prev_button = QPushButton("Назад")
         prev_button.clicked.connect(self.go_to_prev_step)
+        prev_button.setStyleSheet(NAVIGATION_BUTTON_STYLE)
         navigation_layout.addWidget(prev_button)
 
         self.next_button = QPushButton("Далі")
         self.next_button.setEnabled(False)  # Кнопка "Далі" буде активована після перевірки
         self.next_button.clicked.connect(self.go_to_next_step)
+        self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
         navigation_layout.addWidget(self.next_button)
 
         layout.addLayout(navigation_layout)
@@ -288,19 +298,23 @@ class LagrangeStep5(QWidget):
                 if abs(entered_determinant - expected_determinant) < 1e-6:
                     self.result_label.setText("Визначник введено правильно!")
                     self.next_button.setEnabled(True)
+                    self.next_button.setStyleSheet(ACTIVE_NEXT_BUTTON_STYLE)
                     self.determinant_value_checked = expected_determinant  # Зберігаємо обчислений визначник
                 else:
                     self.result_label.setText(f"Неправильний визначник. Очікуване значення: {expected_determinant:.2f}")
                     self.next_button.setEnabled(False)
+                    self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
                     self.determinant_value_checked = None
             else:
                 self.result_label.setText("Перевірка визначника для цієї кількості змінних не реалізована.")
                 self.next_button.setEnabled(False)
+                self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
                 self.determinant_value_checked = None
 
         except ValueError:
             self.result_label.setText("Будь ласка, введіть числове значення визначника.")
             self.next_button.setEnabled(False)
+            self.next_button.setStyleSheet(INACTIVE_NEXT_BUTTON_STYLE)
             self.determinant_value_checked = None
 
     def go_to_prev_step(self):

@@ -44,7 +44,6 @@ class LagrangeStep0(QWidget):
         layout.addStretch()
 
         self.next_button = QPushButton("Далі")
-        self.next_button.setFixedHeight(50)
         self.next_button.setStyleSheet("""
             QPushButton {
                 border: 2px solid #333;
