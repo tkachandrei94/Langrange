@@ -6,7 +6,7 @@
         "complex_solutions",
         "no_solutions"
     ],
-    "active_config": "single_solution",
+    "active_config": "two_solutions",
     "test_configs": {
         "two_solutions": {
             "step_0": [

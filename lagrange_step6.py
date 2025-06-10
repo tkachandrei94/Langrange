@@ -65,7 +65,7 @@ class LagrangeStep6(QWidget):
         self.extremum_type_group.addButton(self.saddle_radio, 3)
         # При зміні радіокнопки оновлюємо відображення функції
         self.extremum_type_group.buttonClicked.connect(self.update_z_function_display)
-        self.extremum_type_group.buttonClicked.connect(self.check_extremum_type)
+        # self.extremum_type_group.buttonClicked.connect(self.check_extremum_type)
 
         extremum_radio_layout = QVBoxLayout()
         extremum_radio_layout.addWidget(self.max_radio)
