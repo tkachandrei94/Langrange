@@ -1,12 +1,12 @@
 {
-    "enabled": true,
+    "enabled": false,
     "configs": [
         "two_solutions",
         "single_solution",
-        "complex_solutions",
+        "third_solution",
         "no_solutions"
     ],
-    "active_config": "two_solutions",
+    "active_config": "third_solution",
     "test_configs": {
         "two_solutions": {
             "step_0": [
@@ -19,8 +19,8 @@
             ],
             "step_2": [
                 "3 * x**2 - 2*λ1",
-                "4 * y - λ1",
-                "-2 * x - y"
+                "-2 * x - y",
+                "4 * y - λ1"
             ],
             "step_3": [
                 "-16/3",
@@ -66,33 +66,33 @@
                 "0"
             ]
         },
-        "complex_solutions": {
+        "third_solution": {
             "step_0": [
                 1,
                 1
             ],
             "step_1": [
-                "x**2 + y**2 + 1",
-                "x + y"
+                "x * y",
+                "x**2 + y**2 - 1"
             ],
             "step_2": [
-                "2 * x - λ1",
-                "2 * y - λ1",
-                "-x - y"
+                "-2*x*λ1 + y",
+                "-x**2 - y**2 + 1 ",
+                "x - 2*y*λ1"
             ],
             "step_3": [
-                "i",
-                "-i",
-                "2"
+                "-sqrt(2)/2",
+                "-sqrt(2)/2",
+                "1/2"
             ],
             "step_4": [
-                "2",
-                "0",
-                "0",
-                "2"
+                "-2 * lambda1",
+                "1",
+                "1",
+                "-2 * lambda1"
             ],
             "step_5": [
-                "4"
+                "0"
             ]
         },
         "no_solutions": {

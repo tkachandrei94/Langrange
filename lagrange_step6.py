@@ -326,7 +326,8 @@ class LagrangeStep6(QWidget):
                         self.substitution_variables_inputs_layout.addWidget(QLabel(", "))
                     self.substitution_variables_inputs_layout.addWidget(var_entry)
                     first = False
-
+                    
+            print(f"point_coords: {point_coords}")
             self.solution_point_label.setText(f"<b>Обране рішення:</b> A( {', '.join(point_coords)} )")
             self.final_function_value_entry.clear() # Очищаємо поле результату функції
         else:
